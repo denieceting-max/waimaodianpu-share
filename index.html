@@ -1,0 +1,2130 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>外贸平台违规罚款统计看板 - 分享版</title>
+    <style>
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --ink: #152238;
+  --muted: #65758b;
+  --line: #dce3ee;
+  --blue: #2563eb;
+  --cyan: #0891b2;
+  --green: #15803d;
+  --red: #dc2626;
+  --amber: #b45309;
+  --shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+}
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.login-overlay.is-visible {
+  display: grid;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.login-card h2,
+.login-card p {
+  margin: 0;
+}
+
+.login-card p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #101827;
+  color: #f8fafc;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #38bdf8;
+  color: #082f49;
+  font-weight: 800;
+}
+
+.brand h1,
+.brand p,
+.topbar h2,
+.panel h3,
+.panel p,
+.eyebrow {
+  margin: 0;
+}
+
+.brand h1 {
+  font-size: 18px;
+}
+
+.brand p,
+.side-note,
+.panel p,
+.metric-card small {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-item {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  text-align: left;
+  color: #cbd5e1;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-item.is-active,
+.nav-item:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.side-note {
+  margin-top: auto;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #334155;
+  border-radius: 8px;
+}
+
+.sidebar-btn {
+  min-height: 34px;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.content {
+  padding: 24px;
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.eyebrow {
+  color: var(--blue);
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.topbar h2 {
+  font-size: 28px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+label,
+.compact-field {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+input,
+select {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.view {
+  display: none;
+}
+
+.view.is-visible {
+  display: grid;
+  gap: 18px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metric-card,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.metric-card {
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.metric-card span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.metric-card strong {
+  font-size: 26px;
+}
+
+.panel {
+  padding: 18px;
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.panel h3 {
+  font-size: 18px;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+}
+
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+th,
+td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+th {
+  background: #f8fafc;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.empty-cell {
+  text-align: center;
+  color: var(--muted);
+}
+
+.status-missing {
+  color: var(--amber);
+  font-weight: 800;
+}
+
+.status-done {
+  color: var(--green);
+  font-weight: 800;
+}
+
+.trend-chart {
+  min-height: 300px;
+  overflow-x: auto;
+  padding: 8px 0 0;
+}
+
+.line-chart {
+  width: 100%;
+  min-width: 760px;
+  height: 300px;
+  display: block;
+}
+
+.chart-grid {
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.chart-axis {
+  stroke: #cbd5e1;
+  stroke-width: 1.2;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-line.temu {
+  stroke: var(--blue);
+}
+
+.chart-line.shein {
+  stroke: var(--cyan);
+}
+
+.chart-dot {
+  fill: #ffffff;
+  stroke-width: 2.5;
+}
+
+.chart-dot.temu {
+  stroke: var(--blue);
+}
+
+.chart-dot.shein {
+  stroke: var(--cyan);
+}
+
+.chart-label {
+  font-size: 12px;
+  fill: var(--ink);
+  font-weight: 700;
+}
+
+.chart-month {
+  font-size: 12px;
+  fill: var(--muted);
+}
+
+.chart-y-label {
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+}
+
+.legend-swatch.temu {
+  background: var(--blue);
+}
+
+.legend-swatch.shein {
+  background: var(--cyan);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid button {
+  align-self: end;
+}
+
+.actions,
+.export-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  border: 0;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.is-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.primary-btn {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.secondary-btn {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.danger-btn {
+  background: #fee2e2;
+  color: var(--red);
+}
+
+.log-box {
+  margin-top: 14px;
+  min-height: 80px;
+  background: #0f172a;
+  color: #dbeafe;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.hint-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sales-input {
+  width: 140px;
+}
+
+@media (max-width: 1100px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .metric-grid,
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .content {
+    padding: 16px;
+  }
+
+  .topbar,
+  .panel-head {
+    display: grid;
+  }
+
+  .filters,
+  .form-grid,
+  .export-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <div id="loginOverlay" class="login-overlay">
+      <form id="loginForm" class="login-card">
+        <h2>外贸平台违规罚款统计看板</h2>
+        <p>请选择登录身份。管理员和全局查看者默认密码为 <strong>123456</strong>。</p>
+        <label>
+          账号
+          <select name="role">
+            <option value="admin">管理员</option>
+            <option value="global_viewer">全局查看者</option>
+            <option value="department_leader">部门组长</option>
+          </select>
+        </label>
+        <label id="loginDepartmentLabel">
+          部门
+          <select name="department" id="loginDepartmentSelect"></select>
+        </label>
+        <label>
+          密码
+          <input name="password" type="password" value="123456" />
+        </label>
+        <button class="primary-btn" type="submit">登录</button>
+      </form>
+    </div>
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">罚</div>
+          <div>
+            <h1>外贸平台违规罚款统计看板</h1>
+            <p>外贸店铺 · TEMU / SHEIN</p>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-item is-active" data-view="dashboard">总览</button>
+          <button class="nav-item" data-view="sales">销售额录入</button>
+          <button class="nav-item" data-view="details">罚单明细</button>
+          <button class="nav-item" data-view="sync">同步与导出</button>
+          <button class="nav-item admin-only" data-view="permissions">权限管理</button>
+        </nav>
+        <div class="side-note">
+          <strong>分享版本</strong>
+          <span id="roleLabel">未登录</span>
+          <button id="logoutBtn" class="sidebar-btn">退出登录</button>
+          <span>打开链接后默认以只读身份查看。管理员录入、导入、清空和权限配置仍保留在原始版本。</span>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Monthly penalty dashboard</p>
+            <h2 id="pageTitle">总览</h2>
+          </div>
+          <div class="filters">
+            <label>
+              月份
+              <select id="monthPicker"></select>
+            </label>
+            <label>
+              负责人
+              <select id="ownerFilter">
+                <option value="">全部负责人</option>
+              </select>
+            </label>
+            <label>
+              店铺
+              <select id="storeFilter">
+                <option value="">全部店铺</option>
+              </select>
+            </label>
+            <label>
+              平台
+              <select id="platformFilter">
+                <option value="">全部平台</option>
+                <option value="TEMU">TEMU</option>
+                <option value="SHEIN">SHEIN</option>
+              </select>
+            </label>
+          </div>
+        </header>
+
+        <section id="dashboard" class="view is-visible">
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>平台罚款合计</span>
+              <strong id="metricTotalFine">¥0.00</strong>
+              <small>TEMU + SHEIN</small>
+            </article>
+            <article class="metric-card">
+              <span>TEMU 罚款</span>
+              <strong id="metricTemuFine">¥0.00</strong>
+              <small>含延迟到货、缺货、质量问题</small>
+            </article>
+            <article class="metric-card">
+              <span>SHEIN 罚款</span>
+              <strong id="metricSheinFine">¥0.00</strong>
+              <small>扣款减补款后的净额</small>
+            </article>
+            <article class="metric-card">
+              <span>TEMU 运营承担</span>
+              <strong id="metricFinalFine">待补全</strong>
+              <small id="metricMissingSales">缺失销售额：0 家</small>
+            </article>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>往月数据对比</h3>
+                <p>按自然年展示 TEMU、SHEIN、合计罚款和最终承担趋势。</p>
+              </div>
+              <label class="compact-field">
+                年份
+                <select id="yearFilter"></select>
+              </label>
+            </div>
+            <div id="trendChart" class="trend-chart" aria-label="往月数据对比图"></div>
+          </section>
+
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>负责人排行</h3>
+                  <p>按 TEMU 运营承担金额降序，SHEIN 不参与分摊。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>负责人</th>
+                      <th>TEMU罚款</th>
+                      <th>免罚额</th>
+                      <th>最终承担</th>
+                      <th>负责人80%</th>
+                      <th>组长20%</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ownerRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>店铺视角</h3>
+                  <p>仅统计 TEMU 店铺；销售额缺失时不计算最终承担金额。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>店铺</th>
+                      <th>负责人</th>
+                      <th>TEMU罚款</th>
+                      <th>销售额</th>
+                      <th>免罚额</th>
+                      <th>最终承担</th>
+                    </tr>
+                  </thead>
+                  <tbody id="storeRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>TEMU 罚款原因</h3>
+                  <p>按核心运营原因汇总当月 TEMU 罚款。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>原因</th>
+                      <th>罚款金额</th>
+                      <th>占TEMU比例</th>
+                    </tr>
+                  </thead>
+                  <tbody id="temuReasonRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>SHEIN 罚款原因</h3>
+                  <p>按补扣款分类汇总，SHEIN 不参与运营分摊。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>原因</th>
+                      <th>罚款金额</th>
+                      <th>占SHEIN比例</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sheinReasonRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="sales" class="view">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>销售额录入</h3>
+                <p>系统按当月有罚单的店铺生成清单，补齐后自动刷新最终罚款。</p>
+              </div>
+              <button id="saveSalesBtn" class="primary-btn">保存销售额</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>店铺</th>
+                    <th>负责人</th>
+                    <th>组长</th>
+                    <th>当月TEMU罚款</th>
+                    <th>销售额</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="salesRows"></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>部门密码</h3>
+                <p>部门组长登录时使用“部门 + 部门密码”。未设置密码的部门不能以组长身份登录。</p>
+              </div>
+              <button id="saveDepartmentPasswordsBtn" class="primary-btn">保存部门密码</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>部门</th>
+                    <th>部门密码</th>
+                  </tr>
+                </thead>
+                <tbody id="departmentPasswordRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="details" class="view">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>罚单明细</h3>
+                <p>TEMU 与 SHEIN 原始记录统一查询。</p>
+              </div>
+              <label class="compact-field">
+                单号查询
+                <input id="numberFilter" type="search" placeholder="输入单号/订单号" />
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>平台</th>
+                    <th>月份</th>
+                    <th>店铺</th>
+                    <th>负责人</th>
+                    <th>类型</th>
+                    <th>单号</th>
+                    <th>金额</th>
+                    <th>运营计算</th>
+                    <th>状态</th>
+                    <th>责任归属</th>
+                  </tr>
+                </thead>
+                <tbody id="detailRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="permissions" class="view">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h3>人员归属表</h3>
+                <p>权限按部门判断。新负责人如果没有归属，会进入待分配，默认只有管理员可见。</p>
+              </div>
+              <div class="actions" style="margin-top:0;">
+                <button id="buildAssignmentsBtn" class="secondary-btn">生成待分配人员</button>
+                <button id="saveAssignmentsBtn" class="primary-btn">保存人员归属</button>
+              </div>
+            </div>
+            <p class="hint-text">字段：员工姓名、部门、直属组长、状态。当前先用员工姓名匹配罚单负责人。</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>员工姓名</th>
+                    <th>部门</th>
+                    <th>直属组长</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="assignmentRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="sync" class="view">
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>简道云同步</h3>
+                  <p>当前先保留配置入口和同步日志；填入凭证后可接 API。</p>
+                </div>
+              </div>
+              <form id="syncForm" class="form-grid">
+                <label>
+                  API Key
+                  <input name="apiKey" type="password" placeholder="后续填写简道云 API Key" />
+                </label>
+                <label>
+                  App ID
+                  <input name="appId" type="text" placeholder="简道云应用 ID" />
+                </label>
+                <label>
+                  店铺表 Entry ID
+                  <input name="storeEntryId" type="text" />
+                </label>
+                <label>
+                  TEMU 表 Entry ID
+                  <input name="temuEntryId" type="text" />
+                </label>
+                <label>
+                  SHEIN 表 Entry ID
+                  <input name="sheinEntryId" type="text" />
+                </label>
+                <button class="primary-btn" type="submit">保存同步配置</button>
+              </form>
+              <div class="actions">
+                <button id="mockSyncBtn" class="secondary-btn">模拟同步样例数据</button>
+                <button id="clearDataBtn" class="danger-btn">清空本地数据</button>
+              </div>
+              <div id="syncLog" class="log-box"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>Excel 兼容导出</h3>
+                  <p>导出 CSV 文件，可直接用 Excel 打开。</p>
+                </div>
+              </div>
+              <div class="export-grid">
+                <button class="secondary-btn" data-export="summary">导出月度汇总</button>
+                <button class="secondary-btn" data-export="stores">导出店铺明细</button>
+                <button class="secondary-btn" data-export="owners">导出负责人分摊</button>
+                <button class="secondary-btn" data-export="details">导出罚单明细</button>
+                <button class="secondary-btn" data-export="missing">导出销售额缺失清单</button>
+                <button class="secondary-btn" data-export="trend">导出往月对比</button>
+              </div>
+            </section>
+
+            <section class="panel admin-only">
+              <div class="panel-head">
+                <div>
+                  <h3>CSV 导入</h3>
+                  <p>可先从简道云导出 CSV，再导入到本地看板。表头使用当前页面导出的字段名。</p>
+                </div>
+              </div>
+              <form id="importForm" class="form-grid">
+                <label>
+                  数据类型
+                  <select name="kind">
+                    <option value="stores">店铺信息</option>
+                    <option value="temu">TEMU 罚单</option>
+                    <option value="shein">SHEIN 罚单</option>
+                    <option value="sales">销售额</option>
+                  </select>
+                </label>
+                <label>
+                  CSV 文件
+                  <input name="file" type="file" accept=".csv,text/csv" />
+                </label>
+                <button class="primary-btn" type="submit">导入 CSV</button>
+              </form>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="emptyRowTemplate">
+      <tr>
+        <td colspan="8" class="empty-cell">暂无数据</td>
+      </tr>
+    </template>
+
+    <script src="./jiandaoyun-data.js"></script>
+    <script>
+const STORAGE_KEY = "waimao_penalty_dashboard_v1";
+const NEXT_STORAGE_KEY = "waimao_penalty_dashboard_v2";
+const SESSION_KEY = "waimao_penalty_session_v1";
+const ASSIGNMENT_STORAGE_KEY = "waimao_person_assignments_v1";
+const RESPONSIBILITY_STORAGE_KEY = "waimao_responsibility_adjustments_v1";
+const DEPARTMENT_PASSWORD_STORAGE_KEY = "waimao_department_passwords_v1";
+
+const seedData = {
+  stores: [
+    { id: "634418210001", name: "CaseCustomHaven", owner: "敖鑫", leader: "邓金娥" },
+    { id: "634418210002", name: "Cover Realm", owner: "敖鑫", leader: "邓金娥" },
+    { id: "634418210003", name: "CraftedByYou", owner: "敖鑫", leader: "邓金娥" },
+    { id: "634418218025832", name: "Light Pai", owner: "李芳玲", leader: "丘立城" },
+    { id: "634418218443702", name: "ProtectPro", owner: "李芳玲", leader: "丘立城" },
+    { id: "634418225670153", name: "Tabify", owner: "李芳玲", leader: "丘立城" },
+    { id: "4576781715", name: "【特新运营账号】SHEIN全托-Case Customization Mall-ZD2901", owner: "敖鑫", leader: "邓金娥" },
+    { id: "4576781808", name: "【深圳韶钦定制运营账号】SHEIN全托-QIN MALL-ZD0899", owner: "敖鑫", leader: "邓金娥" },
+    { id: "4576781901", name: "SHEIN全托-Accessory Lab-ZD3302", owner: "陈容", leader: "丘立城" }
+  ],
+  temuPenalties: [
+    { month: "2026-01", storeId: "634418210001", storeName: "CaseCustomHaven", owner: "敖鑫", type: "发货问题/延迟到货", number: "PCNA20260101001", orderNo: "WB260101001", amount: 1120.5, status: "公示中" },
+    { month: "2026-01", storeId: "634418218443702", storeName: "ProtectPro", owner: "李芳玲", type: "缺货问题/到货缺货", number: "PCNA20260101002", orderNo: "WB260101002", amount: 6223.43, status: "公示中" },
+    { month: "2026-02", storeId: "634418210002", storeName: "Cover Realm", owner: "敖鑫", type: "发货问题/延迟到货", number: "PCNA20260201001", orderNo: "WB260201001", amount: 4210.94, status: "公示中" },
+    { month: "2026-02", storeId: "634418225670153", storeName: "Tabify", owner: "李芳玲", type: "缺货问题/质量问题", number: "PCNA20260201002", orderNo: "WB260201002", amount: 4199, status: "公示中" },
+    { month: "2026-03", storeId: "634418210001", storeName: "CaseCustomHaven", owner: "敖鑫", type: "发货问题/延迟到货", number: "PCNA20260301001", orderNo: "WB260301001", amount: 211.39, status: "公示中" },
+    { month: "2026-03", storeId: "634418210002", storeName: "Cover Realm", owner: "敖鑫", type: "发货问题/延迟到货", number: "PCNA20260301002", orderNo: "WB260301002", amount: 1970.64, status: "公示中" },
+    { month: "2026-03", storeId: "634418210002", storeName: "Cover Realm", owner: "敖鑫", type: "缺货问题/质量问题", number: "PCNA20260301003", orderNo: "WB260301003", amount: 59, status: "公示中" },
+    { month: "2026-03", storeId: "634418210003", storeName: "CraftedByYou", owner: "敖鑫", type: "发货问题/延迟到货", number: "PCNA20260301004", orderNo: "WB260301004", amount: 120, status: "公示中" },
+    { month: "2026-03", storeId: "634418218025832", storeName: "Light Pai", owner: "李芳玲", type: "缺货问题/质量问题", number: "PCNA202603310759243006682", orderNo: "WB2603241637639", amount: 60, status: "公示中" },
+    { month: "2026-03", storeId: "634418218443702", storeName: "ProtectPro", owner: "李芳玲", type: "发货问题/延迟到货", number: "PCNA202603300838402981230", orderNo: "WB260323743910", amount: 30, status: "公示中" },
+    { month: "2026-03", storeId: "634418225670153", storeName: "Tabify", owner: "李芳玲", type: "缺货问题/质量问题", number: "PCNA202603260907062894828", orderNo: "WB260319788024", amount: 23, status: "公示中" },
+    { month: "2026-03", storeId: "634418218443702", storeName: "ProtectPro", owner: "李芳玲", type: "缺货问题/到货缺货", number: "PCNA20260301006", orderNo: "WB260301006", amount: 2205.34, status: "公示中" },
+    { month: "2026-03", storeId: "634418225670153", storeName: "Tabify", owner: "李芳玲", type: "缺货问题/到货缺货", number: "PCNA20260301007", orderNo: "WB260301007", amount: 6458, status: "公示中" }
+  ],
+  sheinPenalties: [
+    { month: "2026-01", storeId: "4576781715", storeName: "【特新运营账号】SHEIN全托-Case Customization Mall-ZD2901", owner: "敖鑫", type: "采购品质-客退扣款", number: "K260101001", amount: 2114.7, status: "审核通过", reason: "售后问题-买家退款", fundType: "扣款" },
+    { month: "2026-02", storeId: "4576781901", storeName: "SHEIN全托-Accessory Lab-ZD3302", owner: "陈容", type: "采购品质-客退扣款", number: "K260201001", amount: 1542.84, status: "审核通过", reason: "售后问题-买家退款", fundType: "扣款" },
+    { month: "2026-03", storeId: "4576781715", storeName: "【特新运营账号】SHEIN全托-Case Customization Mall-ZD2901", owner: "敖鑫", type: "采购品质-客退扣款", number: "K2603292759239696", amount: 3234.94, status: "审核通过", reason: "售后问题-买家退款", fundType: "扣款" },
+    { month: "2026-03", storeId: "4576781808", storeName: "【深圳韶钦定制运营账号】SHEIN全托-QIN MALL-ZD0899", owner: "敖鑫", type: "采购品质-客退扣款", number: "K2603292759239702", amount: 448.99, status: "审核通过", reason: "售后问题-买家退款", fundType: "扣款" },
+    { month: "2026-03", storeId: "4576781901", storeName: "SHEIN全托-Accessory Lab-ZD3302", owner: "陈容", type: "采购品质-客退扣款", number: "K2603292767153154", amount: 988.27, status: "审核通过", reason: "售后问题-买家退款", fundType: "扣款" },
+    { month: "2026-03", storeId: "4576781715", storeName: "【特新运营账号】SHEIN全托-Case Customization Mall-ZD2901", owner: "敖鑫", type: "违规解冻-违规处罚金额解冻", number: "K2603292759239703", amount: -19.95, status: "审核通过", reason: "处置取消", fundType: "补款" },
+    { month: "2026-03", storeId: "4576781901", storeName: "SHEIN全托-Accessory Lab-ZD3302", owner: "陈容", type: "违规处罚", number: "K2603292767153999", amount: 4507.81, status: "审核通过", reason: "违规处罚", fundType: "扣款" }
+  ],
+  sales: [
+    { month: "2026-03", storeId: "634418210001", amount: 4482.82 },
+    { month: "2026-03", storeId: "634418210002", amount: 48837 },
+    { month: "2026-03", storeId: "634418210003", amount: 6320.13 }
+  ],
+  syncConfig: {},
+  logs: ["已载入 2026-03 样例数据，用于验证页面和计算流程。"]
+};
+
+let state = loadState();
+
+const els = {
+  monthPicker: document.querySelector("#monthPicker"),
+  yearFilter: document.querySelector("#yearFilter"),
+  ownerFilter: document.querySelector("#ownerFilter"),
+  storeFilter: document.querySelector("#storeFilter"),
+  platformFilter: document.querySelector("#platformFilter"),
+  numberFilter: document.querySelector("#numberFilter")
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  ensurePersonAssignments();
+  bindAuth();
+  bindNavigation();
+  bindFilters();
+  bindActions();
+  render();
+});
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(NEXT_STORAGE_KEY);
+  const savedState = saved ? safeJson(saved) : null;
+  const source = window.JDY_SYNC_DATA ? {
+    stores: dedupeRows(window.JDY_SYNC_DATA.stores || [], (row) => row.id || row.name),
+    temuPenalties: dedupeRows(window.JDY_SYNC_DATA.temuPenalties || [], (row) => row.number || row.orderNo || [row.month, row.storeId, row.storeName, row.amount, row.type].join("|")),
+    sheinPenalties: dedupeRows(window.JDY_SYNC_DATA.sheinPenalties || [], (row) => row.number || [row.month, row.storeId, row.storeName, row.amount, row.type].join("|")),
+    sales: savedState?.sales || [],
+    syncConfig: savedState?.syncConfig || {},
+    logs: [`已读取本地简道云同步文件：${window.JDY_SYNC_DATA.syncedAt || "未知时间"}`],
+    jdySyncedAt: window.JDY_SYNC_DATA.syncedAt || ""
+  } : savedState;
+  if (source) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(source));
+    return source;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+  return structuredClone(seedData);
+}
+
+function safeJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function dedupeRows(rows, getKey) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const key = getKey(row);
+    if (!key) return;
+    if (!map.has(key)) map.set(key, row);
+  });
+  return [...map.values()];
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function bindNavigation() {
+  document.querySelectorAll(".nav-item").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("is-active"));
+      document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-visible"));
+      button.classList.add("is-active");
+      document.querySelector(`#${button.dataset.view}`).classList.add("is-visible");
+      document.querySelector("#pageTitle").textContent = button.textContent;
+    });
+  });
+}
+
+function bindFilters() {
+  [els.monthPicker, els.yearFilter, els.ownerFilter, els.storeFilter, els.platformFilter, els.numberFilter].forEach((el) => {
+    el.addEventListener("change", render);
+  });
+  els.numberFilter.addEventListener("input", render);
+}
+
+function bindActions() {
+  document.querySelector("#saveSalesBtn").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    document.querySelectorAll(".sales-input").forEach((input) => {
+      const amount = parseAmountInput(input.value);
+      const month = els.monthPicker.value;
+      const storeId = input.dataset.storeId;
+      state.sales = state.sales.filter((item) => !(item.month === month && item.storeId === storeId));
+      if (amount != null && amount > 0) {
+        state.sales.push({ month, storeId, amount });
+      }
+    });
+    addLog(`已保存 ${els.monthPicker.value} 销售额。`);
+    saveState();
+    render();
+  });
+
+  document.querySelector("#detailRows").addEventListener("change", (event) => {
+    const field = event.target.closest("[data-responsibility-field]");
+    if (!field || !isAdmin()) return;
+    persistResponsibilityInput(field);
+    render();
+  });
+
+  document.querySelector("#syncForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    state.syncConfig = Object.fromEntries(form.entries());
+    addLog("已保存简道云同步配置。当前版本需在接入 API 字段 ID 后启用真实同步。");
+    saveState();
+    renderSyncLog();
+  });
+
+  document.querySelector("#mockSyncBtn").addEventListener("click", () => {
+    state = loadState();
+    addLog(window.JDY_SYNC_DATA ? "已重新读取本地简道云数据。" : "已模拟同步样例数据。");
+    saveState();
+    render();
+  });
+
+  document.querySelector("#clearDataBtn").addEventListener("click", () => {
+    if (!confirm("确认清空本地数据？")) return;
+    state = { stores: [], temuPenalties: [], sheinPenalties: [], sales: [], syncConfig: {}, logs: ["已清空本地数据。"] };
+    saveState();
+    render();
+  });
+
+  document.querySelectorAll("[data-export]").forEach((button) => {
+    button.addEventListener("click", () => exportCsv(button.dataset.export));
+  });
+
+  document.querySelector("#importForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!isAdmin()) {
+      alert("普通用户没有导入权限。");
+      return;
+    }
+    const form = new FormData(event.currentTarget);
+    const file = form.get("file");
+    const kind = form.get("kind");
+    if (!file || !file.name) {
+      alert("请选择 CSV 文件。");
+      return;
+    }
+    const text = await file.text();
+    const count = importCsv(kind, text);
+    addLog(`已导入 ${count} 条 ${kind} 数据。`);
+    saveState();
+    event.currentTarget.reset();
+    render();
+  });
+
+  document.querySelector("#buildAssignmentsBtn").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    const created = buildPendingAssignments();
+    addLog(`已生成 ${created} 条待分配人员。`);
+    render();
+  });
+
+  document.querySelector("#saveAssignmentsBtn").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    collectAssignmentsFromTable();
+    saveAssignments();
+    ensureDepartmentPasswords();
+    refreshLoginDepartmentOptions();
+    addLog("已保存人员归属表。");
+    render();
+  });
+
+  document.querySelector("#saveDepartmentPasswordsBtn").addEventListener("click", () => {
+    if (!isAdmin()) return;
+    saveDepartmentPasswordsFromTable();
+    refreshLoginDepartmentOptions();
+    addLog("已保存部门密码。");
+    render();
+  });
+}
+
+function bindAuth() {
+  refreshLoginDepartmentOptions();
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: "global_viewer", department: "" }));
+  document.querySelector('select[name="role"]').addEventListener("change", refreshLoginDepartmentOptions);
+  document.querySelector("#loginForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const role = form.get("role");
+    const department = form.get("department") || "";
+    const password = form.get("password") || "";
+    if (!validateLogin(role, department, password)) {
+      alert("密码错误。");
+      return;
+    }
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, department }));
+    renderAuth();
+    render();
+  });
+
+  document.querySelector("#logoutBtn").addEventListener("click", () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: "global_viewer", department: "" }));
+    renderAuth();
+    render();
+  });
+
+  renderAuth();
+}
+
+function renderAuth() {
+  const session = getSession();
+  document.querySelector("#loginOverlay").classList.toggle("is-visible", !session);
+  const label = session?.role === "admin"
+    ? "当前身份：管理员"
+    : session?.role === "global_viewer"
+      ? "当前身份：全局查看者"
+      : session?.role === "department_leader"
+        ? `当前身份：部门组长（${session.department || "未选择部门"}）`
+        : "未登录";
+  document.querySelector("#roleLabel").textContent = label;
+  const canEdit = session?.role === "admin";
+  document.querySelectorAll(".admin-only").forEach((el) => {
+    el.style.display = canEdit ? "" : "none";
+  });
+  document.querySelectorAll("#saveSalesBtn, .sales-input, #syncForm input, #syncForm button, #mockSyncBtn, #clearDataBtn, #importForm input, #importForm select, #importForm button, #buildAssignmentsBtn, #saveAssignmentsBtn, #saveDepartmentPasswordsBtn").forEach((el) => {
+    el.disabled = !canEdit;
+    el.classList.toggle("is-disabled", !canEdit);
+  });
+  document.querySelectorAll("#assignmentRows input, #assignmentRows select").forEach((el) => {
+    el.disabled = !canEdit;
+  });
+  document.querySelectorAll("#departmentPasswordRows input").forEach((el) => {
+    el.disabled = !canEdit;
+  });
+  document.querySelectorAll("#detailRows [data-responsibility-field]").forEach((el) => {
+    el.disabled = !canEdit;
+    el.classList.toggle("is-disabled", !canEdit);
+  });
+  if (!canEdit && document.querySelector("#permissions")?.classList.contains("is-visible")) {
+    document.querySelector('[data-view="dashboard"]').click();
+  }
+}
+
+function getSession() {
+  try {
+    const session = JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    if (session?.role === "viewer") session.role = "global_viewer";
+    return session;
+  } catch {
+    return null;
+  }
+}
+
+function isAdmin() {
+  return getSession()?.role === "admin";
+}
+
+function validateLogin(role, department, password) {
+  if (role === "admin" || role === "global_viewer") return password === "123456";
+  if (role === "department_leader") {
+    const passwords = getDepartmentPasswords();
+    return !!department && !!passwords[department] && password === passwords[department];
+  }
+  return false;
+}
+
+function getAssignments() {
+  const saved = safeJson(localStorage.getItem(ASSIGNMENT_STORAGE_KEY));
+  return Array.isArray(saved) ? saved : [];
+}
+
+function saveAssignments() {
+  localStorage.setItem(ASSIGNMENT_STORAGE_KEY, JSON.stringify(getAssignmentsFromDomOrStorage()));
+}
+
+function getAssignmentsFromDomOrStorage() {
+  const rows = [...document.querySelectorAll("#assignmentRows tr")];
+  if (!rows.length || rows[0].querySelector(".empty-cell")) return getAssignments();
+  return rows.map((tr) => ({
+    employeeName: tr.querySelector('[data-field="employeeName"]').value.trim(),
+    department: tr.querySelector('[data-field="department"]').value.trim() || "待分配",
+    leaderName: tr.querySelector('[data-field="leaderName"]').value.trim(),
+    status: tr.querySelector('[data-field="status"]').value
+  })).filter((item) => item.employeeName);
+}
+
+function collectAssignmentsFromTable() {
+  localStorage.setItem(ASSIGNMENT_STORAGE_KEY, JSON.stringify(getAssignmentsFromDomOrStorage()));
+}
+
+function ensurePersonAssignments() {
+  let assignments = getAssignments();
+  if (!assignments.length) {
+    assignments = uniqueOwners().map((name) => {
+      const store = state.stores.find((item) => item.owner === name) || {};
+      return {
+        employeeName: name,
+        department: store.leader ? `${store.leader}组` : "待分配",
+        leaderName: store.leader || "",
+        status: store.leader ? "在职" : "待分配"
+      };
+    });
+    localStorage.setItem(ASSIGNMENT_STORAGE_KEY, JSON.stringify(assignments));
+  }
+  buildPendingAssignments();
+  ensureDepartmentPasswords();
+}
+
+function buildPendingAssignments() {
+  const assignments = getAssignments();
+  const names = uniqueOwners();
+  let created = 0;
+  names.forEach((name) => {
+    if (!assignments.some((item) => item.employeeName === name)) {
+      assignments.push({ employeeName: name, department: "待分配", leaderName: "", status: "待分配" });
+      created += 1;
+    }
+  });
+  localStorage.setItem(ASSIGNMENT_STORAGE_KEY, JSON.stringify(assignments));
+  return created;
+}
+
+function uniqueOwners() {
+  return unique(state.stores.map((store) => store.owner).concat(state.temuPenalties.map((item) => item.owner), state.sheinPenalties.map((item) => item.owner))).filter(Boolean);
+}
+
+function activeDepartments() {
+  return unique(getAssignments().map((item) => item.department).filter((item) => item && item !== "待分配")).sort((a, b) => a.localeCompare(b, "zh-CN"));
+}
+
+function getDepartmentPasswords() {
+  const saved = safeJson(localStorage.getItem(DEPARTMENT_PASSWORD_STORAGE_KEY));
+  return saved && typeof saved === "object" ? saved : {};
+}
+
+function saveDepartmentPasswords(passwords) {
+  localStorage.setItem(DEPARTMENT_PASSWORD_STORAGE_KEY, JSON.stringify(passwords));
+}
+
+function ensureDepartmentPasswords() {
+  const passwords = getDepartmentPasswords();
+  activeDepartments().forEach((department) => {
+    if (!passwords[department]) passwords[department] = "123456";
+  });
+  saveDepartmentPasswords(passwords);
+}
+
+function saveDepartmentPasswordsFromTable() {
+  const passwords = getDepartmentPasswords();
+  document.querySelectorAll("#departmentPasswordRows input").forEach((input) => {
+    passwords[input.dataset.department] = input.value.trim();
+  });
+  saveDepartmentPasswords(passwords);
+}
+
+function visibleOwners() {
+  const session = getSession();
+  const assignments = getAssignments();
+  if (!session) return [];
+  if (session.role === "admin") return uniqueOwners();
+  if (session.role === "global_viewer") {
+    return assignments.filter((item) => item.status === "在职" && item.department !== "待分配").map((item) => item.employeeName);
+  }
+  if (session.role === "department_leader") {
+    return assignments.filter((item) => item.status === "在职" && item.department === session.department).map((item) => item.employeeName);
+  }
+  return [];
+}
+
+function canSeeOwner(owner) {
+  return visibleOwners().includes(owner);
+}
+
+function applyAccessFilters(rows) {
+  const session = getSession();
+  if (!session) return [];
+  if (session.role === "admin") return rows;
+  const owners = new Set(visibleOwners());
+  return rows.filter((item) => owners.has(item.owner));
+}
+
+function responsibilityKey(platform, item) {
+  return `${platform}:${item.number || item.orderNo || item.storeId || item.storeName || ""}`;
+}
+
+function getResponsibilityAdjustments() {
+  const saved = safeJson(localStorage.getItem(RESPONSIBILITY_STORAGE_KEY));
+  return saved && typeof saved === "object" ? saved : {};
+}
+
+function saveResponsibilityAdjustments(adjustments) {
+  localStorage.setItem(RESPONSIBILITY_STORAGE_KEY, JSON.stringify(adjustments));
+}
+
+function getResponsibility(platform, item) {
+  const adjustments = getResponsibilityAdjustments();
+  const key = responsibilityKey(platform, item);
+  return adjustments[key] || { scope: "运营责任" };
+}
+
+function responsibilityRatio(platform, item) {
+  const config = getResponsibility(platform, item);
+  if (config.scope === "非运营责任") return 0;
+  return 100;
+}
+
+function operationalAmount(platform, item) {
+  return Number(item.amount || 0) * (responsibilityRatio(platform, item) / 100);
+}
+
+function persistResponsibilityInput(field) {
+  const key = field.dataset.key;
+  const row = field.closest("tr");
+  if (!key || !row) return;
+  const adjustments = getResponsibilityAdjustments();
+  const scope = row.querySelector('[data-responsibility-field="scope"]').value;
+  adjustments[key] = { scope };
+  saveResponsibilityAdjustments(adjustments);
+}
+
+function refreshLoginDepartmentOptions() {
+  const role = document.querySelector('select[name="role"]')?.value;
+  const label = document.querySelector("#loginDepartmentLabel");
+  const select = document.querySelector("#loginDepartmentSelect");
+  if (!label || !select) return;
+  const current = select.value;
+  const departments = activeDepartments();
+  select.innerHTML = departments.map((department) => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join("");
+  if (departments.includes(current)) select.value = current;
+  label.style.display = role === "department_leader" ? "grid" : "none";
+}
+
+function render() {
+  buildPendingAssignments();
+  ensureFilterOptions();
+  const month = els.monthPicker.value;
+  const result = calculateMonth(month);
+  renderMetrics(result);
+  renderTrend();
+  renderOwners(result);
+  renderStores(result);
+  renderReasons(result);
+  renderSales(result);
+  renderDetails();
+  renderAssignments();
+  renderDepartmentPasswords();
+  renderSyncLog();
+  renderAuth();
+  refreshLoginDepartmentOptions();
+}
+
+function ensureFilterOptions() {
+  const allowedOwners = new Set(visibleOwners());
+  const owners = uniqueOwners().filter((owner) => allowedOwners.has(owner) || isAdmin());
+  const visibleStoreRows = state.stores.filter((store) => allowedOwners.has(store.owner) || isAdmin());
+  const visibleTemuRows = state.temuPenalties.filter((item) => allowedOwners.has(item.owner) || isAdmin());
+  const visibleSheinRows = state.sheinPenalties.filter((item) => allowedOwners.has(item.owner) || isAdmin());
+  const stores = unique(visibleStoreRows.map((store) => store.name).concat(visibleTemuRows.map((item) => item.storeName), visibleSheinRows.map((item) => item.storeName))).filter(Boolean);
+  const months = allMonths();
+  const years = unique(months.map((month) => month.slice(0, 4))).sort();
+
+  fillMonthOptions(els.monthPicker, months);
+  fillOptions(els.ownerFilter, owners, "全部负责人");
+  fillOptions(els.storeFilter, stores, "全部店铺");
+  fillOptions(els.yearFilter, years.length ? years : [currentMonthValue().slice(0, 4)], "");
+  if (!els.yearFilter.value) els.yearFilter.value = els.monthPicker.value.slice(0, 4);
+}
+
+function fillMonthOptions(select, values) {
+  const current = select.value || "2026-04";
+  select.innerHTML = "";
+  const options = values.length ? values : allRawMonths();
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = formatMonthLabel(value);
+    select.appendChild(option);
+  });
+  if ([...select.options].some((option) => option.value === current)) {
+    select.value = current;
+  } else if (select.options.length) {
+    select.value = select.options[select.options.length - 1].value;
+  }
+}
+
+function currentMonthValue() {
+  const months = allMonths();
+  const rawMonths = allRawMonths();
+  return els.monthPicker.value || months[months.length - 1] || rawMonths[rawMonths.length - 1] || "2026-04";
+}
+
+function formatMonthLabel(value) {
+  if (!isValidMonth(value)) return "";
+  const [year, month] = value.split("-");
+  return `${year}年${Number(month)}月`;
+}
+
+function fillOptions(select, values, firstLabel) {
+  const current = select.value;
+  select.innerHTML = firstLabel ? `<option value="">${firstLabel}</option>` : "";
+  values.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  if ([...select.options].some((option) => option.value === current)) {
+    select.value = current;
+  }
+}
+
+function calculateMonth(month) {
+  const ownerFilter = els.ownerFilter.value;
+  const storeFilter = els.storeFilter.value;
+  const temu = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
+  const shein = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
+  const byStore = new Map();
+
+  temu.forEach((item) => addFine(byStore, item.storeId, item.storeName, item.owner, operationalAmount("TEMU", item), "temu", item.type));
+
+  const stores = [...byStore.values()].map((row) => {
+    const store = state.stores.find((item) => item.id === row.storeId || item.name === row.storeName) || {};
+    const sale = state.sales.find((item) => item.month === month && item.storeId === row.storeId);
+    const salesAmount = sale ? sale.amount : null;
+    const appealDeduction = row.temuDelayFine * 0.2;
+    const actualFine = Math.max(row.temuFine - appealDeduction, 0);
+    const exemption = salesAmount == null ? null : salesAmount * 0.01;
+    const overage = row.temuFine > 0 && exemption == null ? null : Math.max(actualFine - (exemption || 0), 0);
+    const rate = overage == null ? null : penaltyRate(overage);
+    const finalBear = overage == null ? null : overage * rate;
+    return {
+      ...row,
+      leader: store.leader || "未配置",
+      salesAmount,
+      appealDeduction,
+      actualFine,
+      exemption,
+      overage,
+      finalBear,
+      ownerBear: finalBear == null ? null : finalBear * 0.8,
+      leaderBear: finalBear == null ? null : finalBear * 0.2
+    };
+  });
+
+  const owners = groupBy(stores, "owner").map(([owner, rows]) => ({
+    owner,
+    totalFine: sum(rows, "temuFine"),
+    sheinFine: sum(rows, "sheinFine"),
+    exemption: rows.some((row) => row.exemption == null) ? null : sum(rows, "exemption"),
+    finalBear: rows.some((row) => row.finalBear == null) ? null : sum(rows, "finalBear"),
+    ownerBear: rows.some((row) => row.ownerBear == null) ? null : sum(rows, "ownerBear"),
+    leaderBear: rows.some((row) => row.leaderBear == null) ? null : sum(rows, "leaderBear")
+  })).sort((a, b) => (b.finalBear || 0) - (a.finalBear || 0));
+
+  return {
+    stores,
+    owners,
+    temuFine: sum(temu, "amount"),
+    sheinFine: sum(shein, "amount"),
+    totalFine: sum(temu, "amount") + sum(shein, "amount"),
+    finalBear: stores.some((row) => row.finalBear == null) ? null : sum(stores, "finalBear"),
+    missingSales: stores.filter((row) => row.temuFine > 0 && row.salesAmount == null).length,
+    temuReasons: buildTemuReasons(temu),
+    sheinReasons: buildSheinReasons(shein)
+  };
+}
+
+function buildTemuReasons(rows) {
+  return [
+    { name: "延迟到货", amount: sumMatching(rows, (row) => (row.type || "").includes("延迟到货")) },
+    { name: "到货缺货", amount: sumMatching(rows, (row) => (row.type || "").includes("到货缺货")) },
+    { name: "质量问题", amount: sumMatching(rows, (row) => (row.type || "").includes("质量问题")) }
+  ];
+}
+
+function buildSheinReasons(rows) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const name = row.type || row.reason || "未分类";
+    map.set(name, (map.get(name) || 0) + row.amount);
+  });
+  return [...map.entries()]
+    .map(([name, amount]) => ({ name, amount }))
+    .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+}
+
+function sumMatching(rows, predicate) {
+  return rows.reduce((total, row) => total + (predicate(row) ? Number(row.amount || 0) : 0), 0);
+}
+
+function addFine(map, storeId, storeName, owner, amount, platform, type) {
+  const key = storeId || storeName;
+  if (!map.has(key)) {
+    map.set(key, {
+      storeId: key,
+      storeName,
+      owner,
+      totalFine: 0,
+      temuFine: 0,
+      sheinFine: 0,
+      temuDelayFine: 0,
+      temuStockFine: 0,
+      temuQualityFine: 0
+    });
+  }
+  const row = map.get(key);
+  row.totalFine += amount;
+  if (platform === "temu") {
+    row.temuFine += amount;
+    if (type.includes("延迟到货")) row.temuDelayFine += amount;
+    if (type.includes("到货缺货")) row.temuStockFine += amount;
+    if (type.includes("质量问题")) row.temuQualityFine += amount;
+  } else {
+    row.sheinFine += amount;
+  }
+}
+
+function penaltyRate(overage) {
+  if (overage <= 5000) return 0.3;
+  if (overage <= 10000) return 0.35;
+  return 0.4;
+}
+
+function parseAmountInput(value) {
+  if (value == null) return null;
+  const normalized = String(value).replaceAll(",", "").trim();
+  if (!normalized) return null;
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function renderMetrics(result) {
+  text("#metricTotalFine", money(result.totalFine));
+  text("#metricTemuFine", money(result.temuFine));
+  text("#metricSheinFine", money(result.sheinFine));
+  text("#metricFinalFine", result.finalBear == null ? "待补全" : money(result.finalBear));
+  text("#metricMissingSales", `缺失销售额：${result.missingSales} 家`);
+}
+
+function renderTrend() {
+  const year = els.yearFilter.value || els.monthPicker.value.slice(0, 4);
+  const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
+  const rows = months.map((month) => ({ month, ...calculateMonth(month) }));
+  document.querySelector("#trendChart").innerHTML = renderLineChart(rows, year);
+}
+
+function renderLineChart(rows, year) {
+  const width = 920;
+  const height = 280;
+  const pad = { top: 34, right: 34, bottom: 42, left: 62 };
+  const plotWidth = width - pad.left - pad.right;
+  const plotHeight = height - pad.top - pad.bottom;
+  const maxRaw = Math.max(...rows.map((row) => Math.max(row.temuFine, row.sheinFine)), 1);
+  const maxValue = niceMax(maxRaw);
+  const x = (index) => pad.left + (plotWidth / Math.max(rows.length - 1, 1)) * index;
+  const y = (value) => pad.top + plotHeight - (Number(value || 0) / maxValue) * plotHeight;
+  const temuPoints = rows.map((row, index) => `${x(index)},${y(row.temuFine)}`).join(" ");
+  const sheinPoints = rows.map((row, index) => `${x(index)},${y(row.sheinFine)}`).join(" ");
+  const grid = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const yy = pad.top + plotHeight - ratio * plotHeight;
+    return `<line class="chart-grid" x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}"></line>
+      <text class="chart-y-label" x="${pad.left - 10}" y="${yy + 4}" text-anchor="end">${formatCompact(maxValue * ratio)}</text>`;
+  }).join("");
+  const months = rows.map((row, index) => `<text class="chart-month" x="${x(index)}" y="${height - 16}" text-anchor="middle">${Number(row.month.slice(5))}月</text>`).join("");
+  const temuDots = rows.map((row, index) => renderChartPoint(x(index), y(row.temuFine), row.temuFine, "temu", index, -12)).join("");
+  const sheinDots = rows.map((row, index) => renderChartPoint(x(index), y(row.sheinFine), row.sheinFine, "shein", index, 18)).join("");
+  return `
+    <svg class="line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${year}年TEMU和SHEIN平台罚款趋势">
+      ${grid}
+      <line class="chart-axis" x1="${pad.left}" y1="${pad.top + plotHeight}" x2="${width - pad.right}" y2="${pad.top + plotHeight}"></line>
+      <polyline class="chart-line temu" points="${temuPoints}"></polyline>
+      <polyline class="chart-line shein" points="${sheinPoints}"></polyline>
+      ${temuDots}
+      ${sheinDots}
+      ${months}
+    </svg>
+    <div class="chart-legend">
+      <span class="legend-item"><i class="legend-swatch temu"></i>TEMU平台</span>
+      <span class="legend-item"><i class="legend-swatch shein"></i>SHEIN平台</span>
+    </div>`;
+}
+
+function renderChartPoint(cx, cy, value, platform, index, offset) {
+  const amount = Number(value || 0);
+  const labelY = Math.max(18, Math.min(258, cy + offset));
+  const anchor = index === 0 ? "start" : index === 11 ? "end" : "middle";
+  const labelX = index === 0 ? cx + 4 : index === 11 ? cx - 4 : cx;
+  const label = amount ? `<text class="chart-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}">${formatCompact(amount)}</text>` : "";
+  return `<circle class="chart-dot ${platform}" cx="${cx}" cy="${cy}" r="${amount ? 4.5 : 2.5}"></circle>${label}`;
+}
+
+function niceMax(value) {
+  if (value <= 0) return 1;
+  const power = Math.pow(10, Math.floor(Math.log10(value)));
+  const scaled = value / power;
+  const nice = scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+  return nice * power;
+}
+
+function renderOwners(result) {
+  const rows = result.owners.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.owner)}</td>
+      <td>${money(row.totalFine)}</td>
+      <td>${nullableMoney(row.exemption)}</td>
+      <td>${nullableMoney(row.finalBear)}</td>
+      <td>${nullableMoney(row.ownerBear)}</td>
+      <td>${nullableMoney(row.leaderBear)}</td>
+    </tr>
+  `);
+  fillTable("#ownerRows", rows, 6);
+}
+
+function renderStores(result) {
+  const rows = result.stores.sort((a, b) => (b.finalBear || 0) - (a.finalBear || 0)).map((row) => `
+    <tr>
+      <td>${escapeHtml(row.storeName)}</td>
+      <td>${escapeHtml(row.owner)}</td>
+      <td>${money(row.totalFine)}</td>
+      <td>${nullableMoney(row.salesAmount)}</td>
+      <td>${nullableMoney(row.exemption)}</td>
+      <td>${nullableMoney(row.finalBear)}</td>
+    </tr>
+  `);
+  fillTable("#storeRows", rows, 6);
+}
+
+function renderReasons(result) {
+  const temuRows = result.temuReasons.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.name)}</td>
+      <td>${money(row.amount)}</td>
+      <td>${percent(row.amount, result.temuFine)}</td>
+    </tr>
+  `);
+  fillTable("#temuReasonRows", temuRows, 3);
+
+  const sheinRows = result.sheinReasons.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.name)}</td>
+      <td>${money(row.amount)}</td>
+      <td>${percent(row.amount, result.sheinFine)}</td>
+    </tr>
+  `);
+  fillTable("#sheinReasonRows", sheinRows, 3);
+}
+
+function renderSales(result) {
+  const editable = isAdmin();
+  const salesRows = result.stores
+    .filter((row) => row.temuFine > 0)
+    .sort((a, b) =>
+      String(a.owner || "").localeCompare(String(b.owner || ""), "zh-CN")
+      || String(a.leader || "").localeCompare(String(b.leader || ""), "zh-CN")
+      || String(a.storeName || "").localeCompare(String(b.storeName || ""), "zh-CN")
+    );
+  const rows = salesRows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.storeName)}</td>
+      <td>${escapeHtml(row.owner)}</td>
+      <td>${escapeHtml(row.leader)}</td>
+      <td>${money(row.temuFine)}</td>
+      <td><input class="sales-input" type="number" min="0" step="0.01" data-store-id="${escapeHtml(row.storeId)}" value="${row.salesAmount == null ? "" : row.salesAmount}" ${editable ? "" : "disabled"} /></td>
+      <td class="${row.salesAmount == null ? "status-missing" : "status-done"}">${row.salesAmount == null ? "待录入" : "已录入"}</td>
+    </tr>
+  `);
+  fillTable("#salesRows", rows, 6);
+}
+
+function renderDetails() {
+  const month = els.monthPicker.value;
+  const ownerFilter = els.ownerFilter.value;
+  const storeFilter = els.storeFilter.value;
+  const platformFilter = els.platformFilter.value;
+  const numberFilter = (els.numberFilter.value || "").trim().toLowerCase();
+  const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "TEMU", ...item }));
+  const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "SHEIN", ...item }));
+  const rows = temuRows.concat(sheinRows)
+    .filter((item) => !platformFilter || item.platform === platformFilter)
+    .filter((item) => !numberFilter || [item.number, item.orderNo].some((value) => String(value || "").toLowerCase().includes(numberFilter)))
+    .map(renderDetailRow);
+  fillTable("#detailRows", rows, 10);
+}
+
+function renderDetailRow(item) {
+  const editable = isAdmin();
+  const key = responsibilityKey(item.platform, item);
+  const config = getResponsibility(item.platform, item);
+  const adjustedAmount = item.platform === "TEMU" ? operationalAmount(item.platform, item) : Number(item.amount || 0);
+  return `
+    <tr>
+      <td>${item.platform}</td>
+      <td>${item.month}</td>
+      <td>${escapeHtml(item.storeName)}</td>
+      <td>${escapeHtml(item.owner)}</td>
+      <td>${escapeHtml(item.type)}</td>
+      <td>${escapeHtml(item.number)}</td>
+      <td>${money(item.amount)}</td>
+      <td>${item.platform === "TEMU" ? money(adjustedAmount) : "不参与分摊"}</td>
+      <td>${escapeHtml(item.status)}</td>
+      <td>
+        <select data-key="${escapeHtml(key)}" data-responsibility-field="scope" ${editable ? "" : "disabled"}>
+          <option value="运营责任" ${config.scope === "运营责任" ? "selected" : ""}>运营责任</option>
+          <option value="非运营责任" ${config.scope === "非运营责任" ? "selected" : ""}>非运营责任</option>
+        </select>
+      </td>
+    </tr>
+  `;
+}
+
+function renderAssignments() {
+  const rows = getAssignments().map((item) => `
+    <tr>
+      <td><input data-field="employeeName" value="${escapeHtml(item.employeeName || "")}" /></td>
+      <td><input data-field="department" value="${escapeHtml(item.department || "")}" /></td>
+      <td><input data-field="leaderName" value="${escapeHtml(item.leaderName || "")}" /></td>
+      <td>
+        <select data-field="status">
+          <option value="在职" ${item.status === "在职" ? "selected" : ""}>在职</option>
+          <option value="离职" ${item.status === "离职" ? "selected" : ""}>离职</option>
+          <option value="待分配" ${item.status === "待分配" ? "selected" : ""}>待分配</option>
+        </select>
+      </td>
+    </tr>
+  `);
+  fillTable("#assignmentRows", rows, 4);
+}
+
+function renderDepartmentPasswords() {
+  ensureDepartmentPasswords();
+  const passwords = getDepartmentPasswords();
+  const rows = activeDepartments().map((department) => `
+    <tr>
+      <td>${escapeHtml(department)}</td>
+      <td><input type="text" data-department="${escapeHtml(department)}" value="${escapeHtml(passwords[department] || "")}" /></td>
+    </tr>
+  `);
+  fillTable("#departmentPasswordRows", rows, 2);
+}
+
+function renderSyncLog() {
+  document.querySelector("#syncLog").textContent = (state.logs || []).slice(-8).join("\n");
+}
+
+function exportCsv(type) {
+  const month = els.monthPicker.value;
+  const result = calculateMonth(month);
+  const year = els.yearFilter.value || month.slice(0, 4);
+  let rows = [];
+  let name = "";
+
+  if (type === "summary") {
+    name = `${month}_月度汇总.csv`;
+    rows = [["月份", "TEMU罚款", "SHEIN罚款", "平台罚款合计", "最终需承担", "缺失销售额店铺数"], [month, result.temuFine, result.sheinFine, result.totalFine, result.finalBear ?? "待补全", result.missingSales]];
+  }
+  if (type === "stores") {
+    name = `${month}_店铺明细.csv`;
+    rows = [["店铺", "负责人", "组长", "TEMU罚款", "销售额", "免罚额", "最终需承担"]].concat(result.stores.map((row) => [row.storeName, row.owner, row.leader, row.temuFine, row.salesAmount ?? "", row.exemption ?? "", row.finalBear ?? "待补全"]));
+  }
+  if (type === "owners") {
+    name = `${month}_负责人分摊.csv`;
+    rows = [["负责人", "平台罚款", "免罚额", "最终需承担", "负责人80%", "组长20%"]].concat(result.owners.map((row) => [row.owner, row.totalFine, row.exemption ?? "", row.finalBear ?? "待补全", row.ownerBear ?? "", row.leaderBear ?? ""]));
+  }
+  if (type === "details") {
+    name = `${month}_罚单明细.csv`;
+    const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month).map((item) => exportDetailRow("TEMU", item));
+    const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month).map((item) => exportDetailRow("SHEIN", item));
+    rows = [["平台", "月份", "店铺", "负责人", "类型", "单号", "金额", "运营计算金额", "状态", "责任归属"]].concat(temuRows, sheinRows);
+  }
+  if (type === "missing") {
+    name = `${month}_销售额缺失清单.csv`;
+    rows = [["月份", "店铺", "负责人", "组长", "TEMU罚款"]].concat(result.stores.filter((row) => row.salesAmount == null).map((row) => [month, row.storeName, row.owner, row.leader, row.temuFine]));
+  }
+  if (type === "trend") {
+    name = `${year}_往月数据对比.csv`;
+    rows = [["月份", "TEMU罚款", "SHEIN罚款", "合计罚款", "最终需承担"]].concat(Array.from({ length: 12 }, (_, index) => {
+      const itemMonth = `${year}-${String(index + 1).padStart(2, "0")}`;
+      const row = calculateMonth(itemMonth);
+      return [itemMonth, row.temuFine, row.sheinFine, row.totalFine, row.finalBear ?? "待补全"];
+    }));
+  }
+
+  downloadCsv(name, rows);
+}
+
+function downloadCsv(filename, rows) {
+  const content = "\ufeff" + rows.map((row) => row.map(csvCell).join(",")).join("\n");
+  const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportDetailRow(platform, item) {
+  const config = getResponsibility(platform, item);
+  return [
+    platform,
+    item.month,
+    item.storeName,
+    item.owner,
+    item.type,
+    item.number,
+    item.amount,
+    platform === "TEMU" ? operationalAmount(platform, item) : "不参与分摊",
+    item.status,
+    config.scope
+  ];
+}
+
+function csvCell(value) {
+  const textValue = String(value ?? "");
+  return `"${textValue.replaceAll('"', '""')}"`;
+}
+
+function importCsv(kind, content) {
+  const rows = parseCsv(content);
+  if (rows.length < 2) return 0;
+  const headers = rows[0].map((cell) => cell.trim());
+  const records = rows.slice(1).filter((row) => row.some((cell) => cell.trim())).map((row) => {
+    const record = {};
+    headers.forEach((header, index) => {
+      record[header] = row[index] ?? "";
+    });
+    return record;
+  });
+
+  if (kind === "stores") {
+    state.stores = records.map((row) => ({
+      id: row["店铺ID"] || row["店铺 ID"] || row["storeId"] || row["id"],
+      name: row["店铺名称"] || row["店铺名称（整合）"] || row["店铺"] || row["name"],
+      owner: row["当前运营负责人"] || row["负责人"] || row["owner"],
+      leader: row["当前运营组长"] || row["组长"] || row["leader"]
+    })).filter((row) => row.name);
+  }
+
+  if (kind === "temu") {
+    state.temuPenalties = records.map((row) => ({
+      month: normalizeMonth(row["月份"] || row["违规发起时间(TEMU)"] || row["month"]),
+      storeId: row["店铺ID"] || row["店铺 ID"] || row["storeId"],
+      storeName: row["店铺名"] || row["店铺"] || row["storeName"],
+      owner: row["店铺负责人"] || row["负责人"] || row["owner"],
+      type: row["违规类型(TEMU)"] || row["类型"] || row["type"],
+      number: row["违规编号(TEMU)"] || row["单号"] || row["number"],
+      orderNo: row["订单号(TEMU)"] || row["orderNo"],
+      amount: toNumber(row["违规金额(CNY)(TEMU)"] || row["金额"] || row["amount"]),
+      status: row["进度(TEMU)"] || row["状态"] || row["status"]
+    })).filter((row) => row.month && row.storeName);
+  }
+
+  if (kind === "shein") {
+    state.sheinPenalties = records.map((row) => {
+      const fundType = row["款项类型(希音)"] || row["款项类型"] || row["fundType"];
+      const amount = toNumber(row["总金额(希音)"] || row["金额"] || row["amount"]);
+      return {
+        month: normalizeMonth(row["月份"] || row["会计日期(希音)"] || row["创建时间(希音)"] || row["month"]),
+        storeId: row["店铺ID"] || row["店铺 ID"] || row["storeId"],
+        storeName: row["店铺名"] || row["店铺"] || row["storeName"],
+        owner: row["店铺负责人"] || row["负责人"] || row["owner"],
+        type: row["补扣款分类(希音)"] || row["类型"] || row["type"],
+        number: row["补扣款单号(希音)"] || row["单号"] || row["number"],
+        amount: fundType === "补款" ? -Math.abs(amount) : amount,
+        status: row["单据状态(希音)"] || row["状态"] || row["status"],
+        reason: row["详细扣款原因(希音)"] || row["原因"] || row["reason"],
+        fundType
+      };
+    }).filter((row) => row.month && row.storeName);
+  }
+
+  if (kind === "sales") {
+    state.sales = records.map((row) => ({
+      month: normalizeMonth(row["月份"] || row["month"]),
+      storeId: row["店铺ID"] || row["店铺 ID"] || row["storeId"],
+      amount: toNumber(row["销售额"] || row["店铺销售额"] || row["amount"])
+    })).filter((row) => row.month && row.storeId && row.amount > 0);
+  }
+
+  return records.length;
+}
+
+function parseCsv(content) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  for (let i = 0; i < content.length; i += 1) {
+    const char = content[i];
+    const next = content[i + 1];
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      i += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+  row.push(cell);
+  rows.push(row);
+  if (rows[0]?.[0]?.charCodeAt(0) === 0xfeff) rows[0][0] = rows[0][0].slice(1);
+  return rows;
+}
+
+function normalizeMonth(value) {
+  const textValue = String(value || "").trim();
+  if (/^\d{4}-\d{2}$/.test(textValue)) return textValue;
+  if (/^\d{4}\/\d{1,2}/.test(textValue)) {
+    const [year, month] = textValue.split("/");
+    return `${year}-${month.padStart(2, "0")}`;
+  }
+  if (/^\d{4}-\d{1,2}/.test(textValue)) {
+    const [year, month] = textValue.split("-");
+    return `${year}-${month.padStart(2, "0")}`;
+  }
+  const serial = Number(textValue);
+  if (serial > 30000) {
+    const date = new Date(Date.UTC(1899, 11, 30 + serial));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+  }
+  return textValue;
+}
+
+function toNumber(value) {
+  return Number(String(value || "0").replaceAll(",", "").replace("¥", "")) || 0;
+}
+
+function matchFilters(item, ownerFilter, storeFilter) {
+  return (!ownerFilter || item.owner === ownerFilter) && (!storeFilter || item.storeName === storeFilter);
+}
+
+function allMonths() {
+  return unique(applyAccessFilters(state.temuPenalties).map((item) => item.month).concat(applyAccessFilters(state.sheinPenalties).map((item) => item.month), state.sales.map((item) => item.month))).filter(isValidMonth).sort();
+}
+
+function allRawMonths() {
+  return unique(state.temuPenalties.map((item) => item.month).concat(state.sheinPenalties.map((item) => item.month), state.sales.map((item) => item.month))).filter(isValidMonth).sort();
+}
+
+function isValidMonth(value) {
+  return /^\d{4}-\d{2}$/.test(String(value || ""));
+}
+
+function groupBy(rows, key) {
+  const map = new Map();
+  rows.forEach((row) => {
+    const value = row[key] || "未配置";
+    if (!map.has(value)) map.set(value, []);
+    map.get(value).push(row);
+  });
+  return [...map.entries()];
+}
+
+function sum(rows, key) {
+  return rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
+}
+
+function unique(values) {
+  return [...new Set(values)];
+}
+
+function money(value) {
+  return `¥${Number(value || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function nullableMoney(value) {
+  return value == null ? '<span class="status-missing">待补全</span>' : money(value);
+}
+
+function percent(value, total) {
+  if (!total) return "0.0%";
+  return `${((Number(value || 0) / total) * 100).toFixed(1)}%`;
+}
+
+function formatCompact(value) {
+  if (!value) return "0";
+  if (Math.abs(value) >= 10000) return `${(value / 10000).toFixed(1)}万`;
+  return Math.round(value).toLocaleString("zh-CN");
+}
+
+function fillTable(selector, rows, colspan) {
+  document.querySelector(selector).innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${colspan}" class="empty-cell">暂无数据</td></tr>`;
+}
+
+function text(selector, value) {
+  document.querySelector(selector).textContent = value;
+}
+
+function addLog(message) {
+  state.logs = state.logs || [];
+  const time = new Date().toLocaleString("zh-CN", { hour12: false });
+  state.logs.push(`${time} ${message}`);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+</script>
+  </body>
+</html>
+
