@@ -1702,7 +1702,7 @@ function renderChartPoint(cx, cy, value, platform, index, offset) {
   const labelY = Math.max(18, Math.min(258, cy + offset));
   const anchor = index === 0 ? "start" : index === 11 ? "end" : "middle";
   const labelX = index === 0 ? cx + 4 : index === 11 ? cx - 4 : cx;
-  const label = amount ? `<text class="chart-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}">${formatCompact(amount)}</text>` : "";
+  const label = amount ? `<text class="chart-label" x="${labelX}" y="${labelY}" text-anchor="${anchor}">${money(amount)}</text>` : "";
   return `<circle class="chart-dot ${platform}" cx="${cx}" cy="${cy}" r="${amount ? 4.5 : 2.5}"></circle>${label}`;
 }
 
