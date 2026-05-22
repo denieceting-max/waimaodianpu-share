@@ -1194,7 +1194,9 @@ function bindActions() {
 
 function bindAuth() {
   refreshLoginDepartmentOptions();
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: "global_viewer", department: "" }));
+  if (!sessionStorage.getItem("waimao_share_logged_out_v1") && !getSession()) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: "global_viewer", department: "" }));
+  }
   document.querySelector('select[name="role"]').addEventListener("change", refreshLoginDepartmentOptions);
   document.querySelector("#loginForm").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1206,13 +1208,15 @@ function bindAuth() {
       alert("密码错误。");
       return;
     }
+    sessionStorage.removeItem("waimao_share_logged_out_v1");
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role, department }));
     renderAuth();
     render();
   });
 
   document.querySelector("#logoutBtn").addEventListener("click", () => {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ role: "global_viewer", department: "" }));
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.setItem("waimao_share_logged_out_v1", "1");
     renderAuth();
     render();
   });
