@@ -967,6 +967,11 @@ const SESSION_KEY = "waimao_penalty_session_v1";
 const ASSIGNMENT_STORAGE_KEY = "waimao_person_assignments_v1";
 const RESPONSIBILITY_STORAGE_KEY = "waimao_responsibility_adjustments_v1";
 const DEPARTMENT_PASSWORD_STORAGE_KEY = "waimao_department_passwords_v1";
+const DEFAULT_NON_OPERATIONAL_TEMU_NUMBERS = new Set([
+  "PCNA202604180837073493050",
+  "PCNA202604180832403490917",
+  "PCNA202604140813023372291"
+]);
 
 const seedData = {
   stores: [
@@ -1412,6 +1417,9 @@ function saveResponsibilityAdjustments(adjustments) {
 function getResponsibility(platform, item) {
   const adjustments = getResponsibilityAdjustments();
   const key = responsibilityKey(platform, item);
+  if (!adjustments[key] && platform === "TEMU" && DEFAULT_NON_OPERATIONAL_TEMU_NUMBERS.has(item.number)) {
+    return { scope: "非运营责任" };
+  }
   return adjustments[key] || { scope: "运营责任" };
 }
 
@@ -1534,6 +1542,8 @@ function calculateMonth(month) {
   const byStore = new Map();
 
   temu.forEach((item) => addFine(byStore, item.storeId, item.storeName, item.owner, operationalAmount("TEMU", item), "temu", item.type));
+  const temuOperationalFine = sumTemuOperational(temu);
+  const sheinFine = sum(shein, "amount");
 
   const stores = [...byStore.values()].map((row) => {
     const store = state.stores.find((item) => item.id === row.storeId || item.name === row.storeName) || {};
@@ -1572,9 +1582,9 @@ function calculateMonth(month) {
   return {
     stores,
     owners,
-    temuFine: sum(temu, "amount"),
-    sheinFine: sum(shein, "amount"),
-    totalFine: sum(temu, "amount") + sum(shein, "amount"),
+    temuFine: temuOperationalFine,
+    sheinFine,
+    totalFine: temuOperationalFine + sheinFine,
     finalBear: stores.some((row) => row.finalBear == null) ? null : sum(stores, "finalBear"),
     missingSales: stores.filter((row) => row.temuFine > 0 && row.salesAmount == null).length,
     temuReasons: buildTemuReasons(temu),
@@ -1584,9 +1594,9 @@ function calculateMonth(month) {
 
 function buildTemuReasons(rows) {
   return [
-    { name: "延迟到货", amount: sumMatching(rows, (row) => (row.type || "").includes("延迟到货")) },
-    { name: "到货缺货", amount: sumMatching(rows, (row) => (row.type || "").includes("到货缺货")) },
-    { name: "质量问题", amount: sumMatching(rows, (row) => (row.type || "").includes("质量问题")) }
+    { name: "延迟到货", amount: sumTemuMatching(rows, (row) => (row.type || "").includes("延迟到货")) },
+    { name: "到货缺货", amount: sumTemuMatching(rows, (row) => (row.type || "").includes("到货缺货")) },
+    { name: "质量问题", amount: sumTemuMatching(rows, (row) => (row.type || "").includes("质量问题")) }
   ];
 }
 
@@ -1603,6 +1613,14 @@ function buildSheinReasons(rows) {
 
 function sumMatching(rows, predicate) {
   return rows.reduce((total, row) => total + (predicate(row) ? Number(row.amount || 0) : 0), 0);
+}
+
+function sumTemuOperational(rows) {
+  return rows.reduce((total, row) => total + operationalAmount("TEMU", row), 0);
+}
+
+function sumTemuMatching(rows, predicate) {
+  return rows.reduce((total, row) => total + (predicate(row) ? operationalAmount("TEMU", row) : 0), 0);
 }
 
 function addFine(map, storeId, storeName, owner, amount, platform, type) {
