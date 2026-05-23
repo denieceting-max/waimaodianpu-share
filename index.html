@@ -200,6 +200,7 @@ label,
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+  min-width: 150px;
 }
 
 input,
@@ -238,6 +239,7 @@ select {
 .metric-card {
   padding: 18px;
   display: grid;
+  grid-template-rows: auto 36px auto;
   gap: 8px;
 }
 
@@ -249,6 +251,8 @@ select {
 
 .metric-card strong {
   font-size: 26px;
+  line-height: 36px;
+  white-space: nowrap;
 }
 
 .panel {
@@ -257,9 +261,9 @@ select {
 }
 
 .panel-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: start;
   gap: 16px;
   margin-bottom: 14px;
 }
@@ -403,6 +407,7 @@ tr:last-child td {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  align-self: end;
 }
 
 .chart-zoom button {
@@ -540,6 +545,10 @@ tr:last-child td {
 
   .metric-grid,
   .two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-head {
     grid-template-columns: 1fr;
   }
 }
@@ -1075,7 +1084,7 @@ function loadState() {
     stores: dedupeRows(window.JDY_SYNC_DATA.stores || [], (row) => row.id || row.name),
     temuPenalties: dedupeRows(window.JDY_SYNC_DATA.temuPenalties || [], (row) => row.number || row.orderNo || [row.month, row.storeId, row.storeName, row.amount, row.type].join("|")),
     sheinPenalties: dedupeRows(window.JDY_SYNC_DATA.sheinPenalties || [], (row) => row.number || [row.month, row.storeId, row.storeName, row.amount, row.type].join("|")),
-    sales: savedState?.sales || [],
+    sales: mergeSales(window.JDY_SYNC_DATA.sales || [], savedState?.sales || []),
     syncConfig: savedState?.syncConfig || {},
     logs: [`已读取本地简道云同步文件：${window.JDY_SYNC_DATA.syncedAt || "未知时间"}`],
     jdySyncedAt: window.JDY_SYNC_DATA.syncedAt || ""
@@ -1102,6 +1111,17 @@ function dedupeRows(rows, getKey) {
     const key = getKey(row);
     if (!key) return;
     if (!map.has(key)) map.set(key, row);
+  });
+  return [...map.values()];
+}
+
+function mergeSales(sharedSales, localSales) {
+  const map = new Map();
+  (sharedSales || []).concat(localSales || []).forEach((row) => {
+    if (!row?.month || !row?.storeId) return;
+    const amount = Number(row.amount || 0);
+    if (!(amount > 0)) return;
+    map.set(`${row.month}|${row.storeId}`, { month: row.month, storeId: row.storeId, amount });
   });
   return [...map.values()];
 }
