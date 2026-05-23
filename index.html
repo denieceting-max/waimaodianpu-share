@@ -876,7 +876,7 @@ tr:last-child td {
               </table>
             </div>
           </section>
-          <section class="panel">
+          <section class="panel admin-only">
             <div class="panel-head">
               <div>
                 <h3>部门密码</h3>
@@ -2066,6 +2066,10 @@ function renderAssignments() {
 }
 
 function renderDepartmentPasswords() {
+  if (!isAdmin()) {
+    fillTable("#departmentPasswordRows", [], 2);
+    return;
+  }
   ensureDepartmentPasswords();
   const passwords = getDepartmentPasswords();
   const rows = activeDepartments().map((department) => `
