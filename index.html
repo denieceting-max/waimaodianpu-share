@@ -146,6 +146,20 @@ select {
   color: #ffffff;
 }
 
+.owner-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.owner-link:hover {
+  text-decoration: underline;
+}
+
 .side-note {
   margin-top: auto;
   display: grid;
@@ -1175,13 +1189,20 @@ function saveState() {
 function bindNavigation() {
   document.querySelectorAll(".nav-item").forEach((button) => {
     button.addEventListener("click", () => {
-      document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("is-active"));
-      document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-visible"));
-      button.classList.add("is-active");
-      document.querySelector(`#${button.dataset.view}`).classList.add("is-visible");
-      document.querySelector("#pageTitle").textContent = button.textContent;
+      switchView(button.dataset.view);
     });
   });
+}
+
+function switchView(viewName) {
+  const button = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+  const view = document.querySelector(`#${viewName}`);
+  if (!button || !view) return;
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.remove("is-active"));
+  document.querySelectorAll(".view").forEach((item) => item.classList.remove("is-visible"));
+  button.classList.add("is-active");
+  view.classList.add("is-visible");
+  document.querySelector("#pageTitle").textContent = button.textContent;
 }
 
 function bindFilters() {
@@ -1230,6 +1251,12 @@ function bindActions() {
     if (!field || !isAdmin()) return;
     persistResponsibilityInput(field);
     render();
+  });
+
+  document.querySelector("#dashboard").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-detail-owner]");
+    if (!button) return;
+    jumpToOwnerDetails(button.dataset.detailOwner);
   });
 
   document.querySelector("#syncForm").addEventListener("submit", (event) => {
@@ -1886,7 +1913,7 @@ function niceMax(value) {
 function renderOwners(result) {
   const rows = result.owners.map((row) => `
     <tr>
-      <td>${escapeHtml(row.owner)}</td>
+      <td>${ownerDetailButton(row.owner)}</td>
       <td>${money(row.totalFine)}</td>
       <td>${nullableMoney(row.exemption)}</td>
       <td>${nullableMoney(row.finalBear)}</td>
@@ -1900,13 +1927,27 @@ function renderOwners(result) {
 function renderSheinOwners(result) {
   const rows = (result.sheinOwners || []).map((row) => `
     <tr>
-      <td>${escapeHtml(row.owner)}</td>
+      <td>${ownerDetailButton(row.owner)}</td>
       <td>${money(row.sheinFine)}</td>
       <td>${money(row.nonOperational)}</td>
       <td>${money(row.finalStoreFine)}</td>
     </tr>
   `);
   fillTable("#sheinOwnerRows", rows, 4);
+}
+
+function ownerDetailButton(owner) {
+  return `<button type="button" class="owner-link" data-detail-owner="${escapeHtml(owner)}">${escapeHtml(owner)}</button>`;
+}
+
+function jumpToOwnerDetails(owner) {
+  if (!owner) return;
+  els.ownerFilter.value = owner;
+  els.platformFilter.value = "";
+  els.storeFilter.value = "";
+  els.numberFilter.value = "";
+  switchView("details");
+  render();
 }
 
 function renderStores(result) {
