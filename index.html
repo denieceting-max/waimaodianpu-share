@@ -291,6 +291,12 @@ select {
   gap: 18px;
 }
 
+.three-column {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--line);
@@ -557,7 +563,8 @@ tr:last-child td {
   }
 
   .metric-grid,
-  .two-column {
+  .two-column,
+  .three-column {
     grid-template-columns: 1fr;
   }
 
@@ -713,7 +720,7 @@ tr:last-child td {
             <div id="trendChart" class="trend-chart" aria-label="往月数据对比图"></div>
           </section>
 
-          <div class="two-column">
+          <div class="three-column">
             <section class="panel">
               <div class="panel-head">
                 <div>
@@ -734,6 +741,28 @@ tr:last-child td {
                     </tr>
                   </thead>
                   <tbody id="ownerRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>SHEIN负责人排行</h3>
+                  <p>扣除非运营原因后查看最终店铺罚款金额。</p>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>负责人</th>
+                      <th>SHEIN罚款</th>
+                      <th>非运营原因</th>
+                      <th>最终店铺罚款金额</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sheinOwnerRows"></tbody>
                 </table>
               </div>
             </section>
@@ -1550,6 +1579,7 @@ function render() {
   renderMetrics(result);
   renderTrend();
   renderOwners(result);
+  renderSheinOwners(result);
   renderStores(result);
   renderReasons(result);
   renderSales(result);
@@ -1675,10 +1705,21 @@ function calculateMonth(month) {
     ownerBear: rows.some((row) => row.ownerBear == null) ? null : sum(rows, "ownerBear"),
     leaderBear: rows.some((row) => row.leaderBear == null) ? null : sum(rows, "leaderBear")
   })).sort((a, b) => (b.finalBear || 0) - (a.finalBear || 0));
+  const sheinOwners = groupBy(shein, "owner").map(([owner, rows]) => {
+    const sheinFine = sum(rows, "amount");
+    const nonOperational = sum(rows.filter(isSheinNonOperational), "amount");
+    return {
+      owner,
+      sheinFine,
+      nonOperational,
+      finalStoreFine: sheinFine - nonOperational
+    };
+  }).sort((a, b) => (b.finalStoreFine || 0) - (a.finalStoreFine || 0));
 
   return {
     stores,
     owners,
+    sheinOwners,
     temuFine: temuOperationalFine,
     sheinFine,
     totalFine: temuOperationalFine + sheinFine,
@@ -1706,6 +1747,11 @@ function buildSheinReasons(rows) {
   return [...map.entries()]
     .map(([name, amount]) => ({ name, amount }))
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+}
+
+function isSheinNonOperational(row) {
+  const text = `${row.reason || ""} ${row.type || ""}`;
+  return text.includes("买家退款") || text.includes("商品售后分未达标");
 }
 
 function sumMatching(rows, predicate) {
@@ -1849,6 +1895,18 @@ function renderOwners(result) {
     </tr>
   `);
   fillTable("#ownerRows", rows, 6);
+}
+
+function renderSheinOwners(result) {
+  const rows = (result.sheinOwners || []).map((row) => `
+    <tr>
+      <td>${escapeHtml(row.owner)}</td>
+      <td>${money(row.sheinFine)}</td>
+      <td>${money(row.nonOperational)}</td>
+      <td>${money(row.finalStoreFine)}</td>
+    </tr>
+  `);
+  fillTable("#sheinOwnerRows", rows, 4);
 }
 
 function renderStores(result) {
