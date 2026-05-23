@@ -1772,7 +1772,9 @@ function renderMetrics(result) {
 function renderTrend() {
   const year = els.yearFilter.value || els.monthPicker.value.slice(0, 4);
   const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
-  const rows = months.map((month) => ({ month, ...calculateMonth(month) }));
+  const rows = months
+    .map((month) => ({ month, ...calculateMonth(month) }))
+    .filter((row) => row.temuFine || row.sheinFine);
   document.querySelectorAll("[data-chart-zoom]").forEach((button) => {
     button.classList.toggle("is-active", Number(button.dataset.chartZoom) === trendZoom);
   });
@@ -1780,6 +1782,9 @@ function renderTrend() {
 }
 
 function renderLineChart(rows, year) {
+  if (!rows.length) {
+    return `<div class="empty-cell">当前筛选条件下暂无${year}年往月数据。</div>`;
+  }
   const width = Math.round(920 * trendZoom);
   const height = 280;
   const pad = { top: 34, right: 34, bottom: 42, left: 62 };
