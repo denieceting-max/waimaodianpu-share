@@ -398,6 +398,29 @@ tr:last-child td {
   font-weight: 700;
 }
 
+.chart-zoom {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chart-zoom button {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: var(--muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.chart-zoom button.is-active {
+  border-color: var(--blue);
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue);
+}
+
 .legend-item {
   display: inline-flex;
   align-items: center;
@@ -609,17 +632,17 @@ tr:last-child td {
               </select>
             </label>
             <label>
-              店铺
-              <select id="storeFilter">
-                <option value="">全部店铺</option>
-              </select>
-            </label>
-            <label>
               平台
               <select id="platformFilter">
                 <option value="">全部平台</option>
                 <option value="TEMU">TEMU</option>
                 <option value="SHEIN">SHEIN</option>
+              </select>
+            </label>
+            <label>
+              店铺
+              <select id="storeFilter">
+                <option value="">全部店铺</option>
               </select>
             </label>
           </div>
@@ -659,6 +682,11 @@ tr:last-child td {
                 年份
                 <select id="yearFilter"></select>
               </label>
+              <div class="chart-zoom" aria-label="往月数据对比图缩放">
+                <button type="button" data-chart-zoom="1">100%</button>
+                <button type="button" data-chart-zoom="1.5">150%</button>
+                <button type="button" data-chart-zoom="2">200%</button>
+              </div>
             </div>
             <div id="trendChart" class="trend-chart" aria-label="往月数据对比图"></div>
           </section>
@@ -1019,6 +1047,8 @@ const seedData = {
 };
 
 let state = loadState();
+let trendZoom = 1;
+let trendYearTouched = false;
 
 const els = {
   monthPicker: document.querySelector("#monthPicker"),
@@ -1093,9 +1123,26 @@ function bindNavigation() {
 }
 
 function bindFilters() {
-  [els.monthPicker, els.yearFilter, els.ownerFilter, els.storeFilter, els.platformFilter, els.numberFilter].forEach((el) => {
-    el.addEventListener("change", render);
+  els.monthPicker.addEventListener("change", () => {
+    if (!trendYearTouched) {
+      els.yearFilter.value = els.monthPicker.value.slice(0, 4);
+    }
+    render();
   });
+  els.yearFilter.addEventListener("change", () => {
+    trendYearTouched = true;
+    render();
+  });
+  els.ownerFilter.addEventListener("change", () => {
+    els.platformFilter.value = "";
+    els.storeFilter.value = "";
+    render();
+  });
+  els.platformFilter.addEventListener("change", () => {
+    els.storeFilter.value = "";
+    render();
+  });
+  els.storeFilter.addEventListener("change", render);
   els.numberFilter.addEventListener("input", render);
 }
 
@@ -1148,6 +1195,13 @@ function bindActions() {
 
   document.querySelectorAll("[data-export]").forEach((button) => {
     button.addEventListener("click", () => exportCsv(button.dataset.export));
+  });
+
+  document.querySelectorAll("[data-chart-zoom]").forEach((button) => {
+    button.addEventListener("click", () => {
+      trendZoom = Number(button.dataset.chartZoom) || 1;
+      renderTrend();
+    });
   });
 
   document.querySelector("#importForm").addEventListener("submit", async (event) => {
@@ -1476,19 +1530,28 @@ function render() {
 
 function ensureFilterOptions() {
   const allowedOwners = new Set(visibleOwners());
-  const owners = uniqueOwners().filter((owner) => allowedOwners.has(owner) || isAdmin());
-  const visibleStoreRows = state.stores.filter((store) => allowedOwners.has(store.owner) || isAdmin());
   const visibleTemuRows = state.temuPenalties.filter((item) => allowedOwners.has(item.owner) || isAdmin());
   const visibleSheinRows = state.sheinPenalties.filter((item) => allowedOwners.has(item.owner) || isAdmin());
-  const stores = unique(visibleStoreRows.map((store) => store.name).concat(visibleTemuRows.map((item) => item.storeName), visibleSheinRows.map((item) => item.storeName))).filter(Boolean);
+  const penaltyRows = visibleTemuRows.map((item) => ({ platform: "TEMU", ...item }))
+    .concat(visibleSheinRows.map((item) => ({ platform: "SHEIN", ...item })));
+  const owners = unique(penaltyRows.map((item) => item.owner)).filter(Boolean);
+  const ownerFilter = els.ownerFilter.value;
+  const ownerRows = penaltyRows.filter((item) => !ownerFilter || item.owner === ownerFilter);
+  const platforms = unique(ownerRows.map((item) => item.platform)).filter(Boolean);
+  const platformFilter = els.platformFilter.value;
+  const storeRows = ownerRows.filter((item) => !platformFilter || item.platform === platformFilter);
+  const stores = unique(storeRows.map((item) => item.storeName)).filter(Boolean);
   const months = allMonths();
   const years = unique(months.map((month) => month.slice(0, 4))).sort();
 
   fillMonthOptions(els.monthPicker, months);
   fillOptions(els.ownerFilter, owners, "全部负责人");
+  fillOptions(els.platformFilter, platforms, "全部平台");
   fillOptions(els.storeFilter, stores, "全部店铺");
   fillOptions(els.yearFilter, years.length ? years : [currentMonthValue().slice(0, 4)], "");
-  if (!els.yearFilter.value) els.yearFilter.value = els.monthPicker.value.slice(0, 4);
+  if (!trendYearTouched) {
+    els.yearFilter.value = els.monthPicker.value.slice(0, 4);
+  }
 }
 
 function fillMonthOptions(select, values) {
@@ -1537,8 +1600,9 @@ function fillOptions(select, values, firstLabel) {
 function calculateMonth(month) {
   const ownerFilter = els.ownerFilter.value;
   const storeFilter = els.storeFilter.value;
-  const temu = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
-  const shein = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
+  const platformFilter = els.platformFilter.value;
+  const temu = platformFilter === "SHEIN" ? [] : applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
+  const shein = platformFilter === "TEMU" ? [] : applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
   const byStore = new Map();
 
   temu.forEach((item) => addFine(byStore, item.storeId, item.storeName, item.owner, operationalAmount("TEMU", item), "temu", item.type));
@@ -1676,11 +1740,14 @@ function renderTrend() {
   const year = els.yearFilter.value || els.monthPicker.value.slice(0, 4);
   const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
   const rows = months.map((month) => ({ month, ...calculateMonth(month) }));
+  document.querySelectorAll("[data-chart-zoom]").forEach((button) => {
+    button.classList.toggle("is-active", Number(button.dataset.chartZoom) === trendZoom);
+  });
   document.querySelector("#trendChart").innerHTML = renderLineChart(rows, year);
 }
 
 function renderLineChart(rows, year) {
-  const width = 920;
+  const width = Math.round(920 * trendZoom);
   const height = 280;
   const pad = { top: 34, right: 34, bottom: 42, left: 62 };
   const plotWidth = width - pad.left - pad.right;
