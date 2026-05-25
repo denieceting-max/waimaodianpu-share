@@ -204,7 +204,7 @@ select {
 
 .filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
   gap: 10px;
   width: 100%;
 }
@@ -665,8 +665,24 @@ tr:last-child td {
           </div>
           <div class="filters">
             <label>
-              月份
-              <select id="monthPicker"></select>
+              日期范围
+              <select id="periodPreset">
+                <option value="current_month">本月</option>
+                <option value="previous_month">上月</option>
+                <option value="current_quarter">本季度</option>
+                <option value="previous_quarter">上季度</option>
+                <option value="current_year">今年</option>
+                <option value="previous_year">去年</option>
+                <option value="custom" selected>自定义</option>
+              </select>
+            </label>
+            <label>
+              开始日期
+              <input id="startDatePicker" type="date" />
+            </label>
+            <label>
+              结束日期
+              <input id="endDatePicker" type="date" />
             </label>
             <label>
               负责人
@@ -763,7 +779,7 @@ tr:last-child td {
               <div class="panel-head">
                 <div>
                   <h3>SHEIN店铺情况</h3>
-                  <p>SHEIN当月罚款情况，点击负责人名字即可查看罚单明细。</p>
+                  <p>SHEIN当前筛选范围罚款情况，点击负责人名字即可查看罚单明细。</p>
                 </div>
               </div>
               <div class="table-wrap">
@@ -785,7 +801,7 @@ tr:last-child td {
               <div class="panel-head">
                 <div>
                   <h3>店铺视角</h3>
-                  <p>仅统计 TEMU 店铺；销售额缺失时不计算最终承担金额。</p>
+                  <p>仅统计 TEMU 店铺；当前筛选范围内销售额缺失时不计算最终承担金额。</p>
                 </div>
               </div>
               <div class="table-wrap">
@@ -811,7 +827,7 @@ tr:last-child td {
               <div class="panel-head">
                 <div>
                   <h3>TEMU 罚款原因</h3>
-                  <p>按核心运营原因汇总当月 TEMU 罚款。</p>
+                  <p>按核心运营原因汇总当前筛选范围内的 TEMU 罚款。</p>
                 </div>
               </div>
               <div class="table-wrap">
@@ -856,7 +872,7 @@ tr:last-child td {
             <div class="panel-head">
               <div>
                 <h3>销售额录入</h3>
-                <p>系统按当月有罚单的店铺生成清单，补齐后自动刷新最终罚款。</p>
+                <p>系统按当前筛选范围内有罚单的店铺生成清单，补齐后自动刷新最终罚款。</p>
               </div>
               <button id="saveSalesBtn" class="primary-btn">保存销售额</button>
             </div>
@@ -864,10 +880,11 @@ tr:last-child td {
               <table>
                 <thead>
                   <tr>
+                    <th>月份</th>
                     <th>店铺</th>
                     <th>负责人</th>
                     <th>组长</th>
-                    <th>当月TEMU罚款</th>
+                    <th>TEMU罚款</th>
                     <th>销售额</th>
                     <th>状态</th>
                   </tr>
@@ -1116,7 +1133,9 @@ let trendZoom = 1;
 let trendYearTouched = false;
 
 const els = {
-  monthPicker: document.querySelector("#monthPicker"),
+  periodPreset: document.querySelector("#periodPreset"),
+  startDatePicker: document.querySelector("#startDatePicker"),
+  endDatePicker: document.querySelector("#endDatePicker"),
   yearFilter: document.querySelector("#yearFilter"),
   ownerFilter: document.querySelector("#ownerFilter"),
   storeFilter: document.querySelector("#storeFilter"),
@@ -1206,10 +1225,20 @@ function switchView(viewName) {
 }
 
 function bindFilters() {
-  els.monthPicker.addEventListener("change", () => {
-    if (!trendYearTouched) {
-      els.yearFilter.value = els.monthPicker.value.slice(0, 4);
-    }
+  els.periodPreset.addEventListener("change", () => {
+    applyPresetRange(els.periodPreset.value);
+    render();
+  });
+  els.startDatePicker.addEventListener("change", () => {
+    els.periodPreset.value = "custom";
+    normalizeDateRangeInputs();
+    syncTrendYearWithRange();
+    render();
+  });
+  els.endDatePicker.addEventListener("change", () => {
+    els.periodPreset.value = "custom";
+    normalizeDateRangeInputs();
+    syncTrendYearWithRange();
     render();
   });
   els.yearFilter.addEventListener("change", () => {
@@ -1234,14 +1263,15 @@ function bindActions() {
     if (!isAdmin()) return;
     document.querySelectorAll(".sales-input").forEach((input) => {
       const amount = parseAmountInput(input.value);
-      const month = els.monthPicker.value;
+      const month = input.dataset.month;
       const storeId = input.dataset.storeId;
       state.sales = state.sales.filter((item) => !(item.month === month && item.storeId === storeId));
       if (amount != null && amount > 0) {
         state.sales.push({ month, storeId, amount });
       }
     });
-    addLog(`已保存 ${els.monthPicker.value} 销售额。`);
+    const range = getSelectedMonthRange();
+    addLog(`已保存 ${range.start} 至 ${range.end} 销售额。`);
     saveState();
     render();
   });
@@ -1601,8 +1631,8 @@ function refreshLoginDepartmentOptions() {
 function render() {
   buildPendingAssignments();
   ensureFilterOptions();
-  const month = els.monthPicker.value;
-  const result = calculateMonth(month);
+  const range = getSelectedMonthRange();
+  const result = calculateRange(range.start, range.end);
   renderMetrics(result);
   renderTrend();
   renderOwners(result);
@@ -1634,43 +1664,12 @@ function ensureFilterOptions() {
   const months = allMonths();
   const years = unique(months.map((month) => month.slice(0, 4))).sort();
 
-  fillMonthOptions(els.monthPicker, months);
   fillOptions(els.ownerFilter, owners, "全部负责人");
   fillOptions(els.platformFilter, platforms, "全部平台");
   fillOptions(els.storeFilter, stores, "全部店铺");
-  fillOptions(els.yearFilter, years.length ? years : [currentMonthValue().slice(0, 4)], "");
-  if (!trendYearTouched) {
-    els.yearFilter.value = els.monthPicker.value.slice(0, 4);
-  }
-}
-
-function fillMonthOptions(select, values) {
-  const current = select.value || "2026-04";
-  select.innerHTML = "";
-  const options = values.length ? values : allRawMonths();
-  options.forEach((value) => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = formatMonthLabel(value);
-    select.appendChild(option);
-  });
-  if ([...select.options].some((option) => option.value === current)) {
-    select.value = current;
-  } else if (select.options.length) {
-    select.value = select.options[select.options.length - 1].value;
-  }
-}
-
-function currentMonthValue() {
-  const months = allMonths();
-  const rawMonths = allRawMonths();
-  return els.monthPicker.value || months[months.length - 1] || rawMonths[rawMonths.length - 1] || "2026-04";
-}
-
-function formatMonthLabel(value) {
-  if (!isValidMonth(value)) return "";
-  const [year, month] = value.split("-");
-  return `${year}年${Number(month)}月`;
+  ensureDateRangeInputs(months);
+  fillOptions(els.yearFilter, years.length ? years : [getSelectedMonthRange().start.slice(0, 4)], "");
+  syncTrendYearWithRange();
 }
 
 function fillOptions(select, values, firstLabel) {
@@ -1687,12 +1686,99 @@ function fillOptions(select, values, firstLabel) {
   }
 }
 
+function ensureDateRangeInputs(months) {
+  const options = months.length ? months : allRawMonths();
+  const fallbackMonth = options[options.length - 1] || "2026-05";
+  if (!els.startDatePicker.value) {
+    els.startDatePicker.value = `${fallbackMonth}-01`;
+  }
+  if (!els.endDatePicker.value) {
+    els.endDatePicker.value = endOfMonth(`${fallbackMonth}-01`);
+  }
+  normalizeDateRangeInputs();
+}
+
+function normalizeDateRangeInputs() {
+  if (els.startDatePicker.value && els.endDatePicker.value && els.endDatePicker.value < els.startDatePicker.value) {
+    const start = els.startDatePicker.value;
+    els.startDatePicker.value = els.endDatePicker.value;
+    els.endDatePicker.value = start;
+  }
+}
+
+function syncTrendYearWithRange() {
+  if (trendYearTouched) return;
+  const range = getSelectedMonthRange();
+  if (range.start) {
+    els.yearFilter.value = range.start.slice(0, 4);
+  }
+}
+
+function getSelectedMonthRange() {
+  const startDate = els.startDatePicker.value || `${allMonths()[0] || "2026-05"}-01`;
+  const endDate = els.endDatePicker.value || endOfMonth(startDate);
+  let start = startDate.slice(0, 7);
+  let end = endDate.slice(0, 7);
+  if (end < start) {
+    [start, end] = [end, start];
+  }
+  return { start, end };
+}
+
+function applyPresetRange(preset) {
+  const today = new Date();
+  let start;
+  let end;
+  if (preset === "current_month") {
+    start = toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1));
+    end = toDateInputValue(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+  } else if (preset === "previous_month") {
+    start = toDateInputValue(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+    end = toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 0));
+  } else if (preset === "current_quarter") {
+    const quarterStartMonth = Math.floor(today.getMonth() / 3) * 3;
+    start = toDateInputValue(new Date(today.getFullYear(), quarterStartMonth, 1));
+    end = toDateInputValue(new Date(today.getFullYear(), quarterStartMonth + 3, 0));
+  } else if (preset === "previous_quarter") {
+    const quarterStartMonth = Math.floor(today.getMonth() / 3) * 3;
+    start = toDateInputValue(new Date(today.getFullYear(), quarterStartMonth - 3, 1));
+    end = toDateInputValue(new Date(today.getFullYear(), quarterStartMonth, 0));
+  } else if (preset === "current_year") {
+    start = `${today.getFullYear()}-01-01`;
+    end = `${today.getFullYear()}-12-31`;
+  } else if (preset === "previous_year") {
+    start = `${today.getFullYear() - 1}-01-01`;
+    end = `${today.getFullYear() - 1}-12-31`;
+  } else {
+    normalizeDateRangeInputs();
+    syncTrendYearWithRange();
+    return;
+  }
+  els.startDatePicker.value = start;
+  els.endDatePicker.value = end;
+  normalizeDateRangeInputs();
+  syncTrendYearWithRange();
+}
+
+function toDateInputValue(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function endOfMonth(dateText) {
+  const [year, month] = String(dateText).split("-").map(Number);
+  return toDateInputValue(new Date(year, month, 0));
+}
+
 function calculateMonth(month) {
+  return calculateRange(month, month);
+}
+
+function calculateRange(start, end) {
   const ownerFilter = els.ownerFilter.value;
   const storeFilter = els.storeFilter.value;
   const platformFilter = els.platformFilter.value;
-  const temu = platformFilter === "SHEIN" ? [] : applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
-  const shein = platformFilter === "TEMU" ? [] : applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter));
+  const temu = platformFilter === "SHEIN" ? [] : applyAccessFilters(state.temuPenalties).filter((item) => inMonthRange(item.month, start, end) && matchFilters(item, ownerFilter, storeFilter));
+  const shein = platformFilter === "TEMU" ? [] : applyAccessFilters(state.sheinPenalties).filter((item) => inMonthRange(item.month, start, end) && matchFilters(item, ownerFilter, storeFilter));
   const byStore = new Map();
 
   temu.forEach((item) => addFine(byStore, item.storeId, item.storeName, item.owner, operationalAmount("TEMU", item), "temu", item.type));
@@ -1701,8 +1787,11 @@ function calculateMonth(month) {
 
   const stores = [...byStore.values()].map((row) => {
     const store = state.stores.find((item) => item.id === row.storeId || item.name === row.storeName) || {};
-    const sale = state.sales.find((item) => item.month === month && item.storeId === row.storeId);
-    const salesAmount = sale ? sale.amount : null;
+    const salesRows = state.sales.filter((item) => inMonthRange(item.month, start, end) && item.storeId === row.storeId);
+    const expectedSalesMonths = row.temuFine > 0 ? monthsWithStoreFine(row.storeId, start, end) : [];
+    const salesAmount = row.temuFine > 0
+      ? (expectedSalesMonths.every((month) => salesRows.some((sale) => sale.month === month)) ? sum(salesRows, "amount") : null)
+      : 0;
     const appealDeduction = row.temuDelayFine * 0.2;
     const actualFine = Math.max(row.temuFine - appealDeduction, 0);
     const exemption = salesAmount == null ? null : salesAmount * 0.01;
@@ -1820,6 +1909,18 @@ function addFine(map, storeId, storeName, owner, amount, platform, type) {
   }
 }
 
+function inMonthRange(month, start, end) {
+  return month && month >= start && month <= end;
+}
+
+function monthsWithStoreFine(storeId, start, end) {
+  return unique(
+    applyAccessFilters(state.temuPenalties)
+      .filter((item) => item.storeId === storeId && inMonthRange(item.month, start, end))
+      .map((item) => item.month)
+  );
+}
+
 function penaltyRate(overage) {
   if (overage <= 5000) return 0.3;
   if (overage <= 10000) return 0.35;
@@ -1843,7 +1944,7 @@ function renderMetrics(result) {
 }
 
 function renderTrend() {
-  const year = els.yearFilter.value || els.monthPicker.value.slice(0, 4);
+  const year = els.yearFilter.value || getSelectedMonthRange().start.slice(0, 4);
   const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`);
   const rows = months
     .map((month) => ({ month, ...calculateMonth(month) }))
@@ -1986,39 +2087,68 @@ function renderReasons(result) {
 
 function renderSales(result) {
   const editable = isAdmin();
-  const salesRows = result.stores
-    .filter((row) => row.temuFine > 0)
+  const salesRows = buildSalesEntryRows()
     .sort((a, b) =>
-      String(a.owner || "").localeCompare(String(b.owner || ""), "zh-CN")
+      String(a.month || "").localeCompare(String(b.month || ""))
+      || String(a.owner || "").localeCompare(String(b.owner || ""), "zh-CN")
       || String(a.leader || "").localeCompare(String(b.leader || ""), "zh-CN")
       || String(a.storeName || "").localeCompare(String(b.storeName || ""), "zh-CN")
     );
   const rows = salesRows.map((row) => `
     <tr>
+      <td>${escapeHtml(row.month)}</td>
       <td>${escapeHtml(row.storeName)}</td>
       <td>${escapeHtml(row.owner)}</td>
       <td>${escapeHtml(row.leader)}</td>
-      <td>${money(row.temuFine)}</td>
-      <td><input class="sales-input" type="number" min="0" step="0.01" data-store-id="${escapeHtml(row.storeId)}" value="${row.salesAmount == null ? "" : row.salesAmount}" ${editable ? "" : "disabled"} /></td>
+      <td>${money(row.totalFine)}</td>
+      <td><input class="sales-input" type="number" min="0" step="0.01" data-month="${escapeHtml(row.month)}" data-store-id="${escapeHtml(row.storeId)}" value="${row.salesAmount == null ? "" : row.salesAmount}" ${editable ? "" : "disabled"} /></td>
       <td class="${row.salesAmount == null ? "status-missing" : "status-done"}">${row.salesAmount == null ? "待录入" : "已录入"}</td>
     </tr>
   `);
-  fillTable("#salesRows", rows, 6);
+  fillTable("#salesRows", rows, 7);
 }
 
 function renderDetails() {
-  const month = els.monthPicker.value;
+  const range = getSelectedMonthRange();
   const ownerFilter = els.ownerFilter.value;
   const storeFilter = els.storeFilter.value;
   const platformFilter = els.platformFilter.value;
   const numberFilter = (els.numberFilter.value || "").trim().toLowerCase();
-  const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "TEMU", ...item }));
-  const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "SHEIN", ...item }));
+  const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => inMonthRange(item.month, range.start, range.end) && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "TEMU", ...item }));
+  const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => inMonthRange(item.month, range.start, range.end) && matchFilters(item, ownerFilter, storeFilter)).map((item) => ({ platform: "SHEIN", ...item }));
   const rows = temuRows.concat(sheinRows)
     .filter((item) => !platformFilter || item.platform === platformFilter)
     .filter((item) => !numberFilter || [item.number, item.orderNo].some((value) => String(value || "").toLowerCase().includes(numberFilter)))
     .map(renderDetailRow);
   fillTable("#detailRows", rows, 10);
+}
+
+function buildSalesEntryRows() {
+  const range = getSelectedMonthRange();
+  const ownerFilter = els.ownerFilter.value;
+  const storeFilter = els.storeFilter.value;
+  const map = new Map();
+  applyAccessFilters(state.temuPenalties).forEach((item) => {
+    if (!inMonthRange(item.month, range.start, range.end) || !matchFilters(item, ownerFilter, storeFilter)) return;
+    const key = `${item.month}|${item.storeId || item.storeName}`;
+    if (!map.has(key)) {
+      const store = state.stores.find((row) => row.id === item.storeId || row.name === item.storeName) || {};
+      map.set(key, {
+        month: item.month,
+        storeId: item.storeId || item.storeName,
+        storeName: item.storeName,
+        owner: item.owner || store.owner || "未配置",
+        leader: store.leader || "未配置",
+        totalFine: 0,
+        salesAmount: null
+      });
+    }
+    map.get(key).totalFine += operationalAmount("TEMU", item);
+  });
+  return [...map.values()].map((row) => {
+    const sale = state.sales.find((item) => item.month === row.month && item.storeId === row.storeId);
+    return { ...row, salesAmount: sale ? sale.amount : null };
+  });
 }
 
 function renderDetailRow(item) {
@@ -2086,33 +2216,34 @@ function renderSyncLog() {
 }
 
 function exportCsv(type) {
-  const month = els.monthPicker.value;
-  const result = calculateMonth(month);
-  const year = els.yearFilter.value || month.slice(0, 4);
+  const range = getSelectedMonthRange();
+  const label = range.start === range.end ? range.start : `${range.start}_${range.end}`;
+  const result = calculateRange(range.start, range.end);
+  const year = els.yearFilter.value || range.start.slice(0, 4);
   let rows = [];
   let name = "";
 
   if (type === "summary") {
-    name = `${month}_月度汇总.csv`;
-    rows = [["月份", "TEMU罚款", "SHEIN罚款", "平台罚款合计", "最终需承担", "缺失销售额店铺数"], [month, result.temuFine, result.sheinFine, result.totalFine, result.finalBear ?? "待补全", result.missingSales]];
+    name = `${label}_汇总.csv`;
+    rows = [["开始月份", "结束月份", "TEMU罚款", "SHEIN罚款", "平台罚款合计", "最终需承担", "缺失销售额店铺数"], [range.start, range.end, result.temuFine, result.sheinFine, result.totalFine, result.finalBear ?? "待补全", result.missingSales]];
   }
   if (type === "stores") {
-    name = `${month}_店铺明细.csv`;
+    name = `${label}_店铺明细.csv`;
     rows = [["店铺", "负责人", "组长", "TEMU罚款", "销售额", "免罚额", "最终需承担"]].concat(result.stores.map((row) => [row.storeName, row.owner, row.leader, row.temuFine, row.salesAmount ?? "", row.exemption ?? "", row.finalBear ?? "待补全"]));
   }
   if (type === "owners") {
-    name = `${month}_负责人分摊.csv`;
+    name = `${label}_负责人分摊.csv`;
     rows = [["负责人", "平台罚款", "免罚额", "最终需承担", "负责人80%", "组长20%"]].concat(result.owners.map((row) => [row.owner, row.totalFine, row.exemption ?? "", row.finalBear ?? "待补全", row.ownerBear ?? "", row.leaderBear ?? ""]));
   }
   if (type === "details") {
-    name = `${month}_罚单明细.csv`;
-    const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => item.month === month).map((item) => exportDetailRow("TEMU", item));
-    const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => item.month === month).map((item) => exportDetailRow("SHEIN", item));
+    name = `${label}_罚单明细.csv`;
+    const temuRows = applyAccessFilters(state.temuPenalties).filter((item) => inMonthRange(item.month, range.start, range.end)).map((item) => exportDetailRow("TEMU", item));
+    const sheinRows = applyAccessFilters(state.sheinPenalties).filter((item) => inMonthRange(item.month, range.start, range.end)).map((item) => exportDetailRow("SHEIN", item));
     rows = [["平台", "月份", "店铺", "负责人", "类型", "单号", "金额", "运营计算金额", "状态", "责任归属"]].concat(temuRows, sheinRows);
   }
   if (type === "missing") {
-    name = `${month}_销售额缺失清单.csv`;
-    rows = [["月份", "店铺", "负责人", "组长", "TEMU罚款"]].concat(result.stores.filter((row) => row.salesAmount == null).map((row) => [month, row.storeName, row.owner, row.leader, row.temuFine]));
+    name = `${label}_销售额缺失清单.csv`;
+    rows = [["开始月份", "结束月份", "店铺", "负责人", "组长", "TEMU罚款"]].concat(result.stores.filter((row) => row.salesAmount == null).map((row) => [range.start, range.end, row.storeName, row.owner, row.leader, row.temuFine]));
   }
   if (type === "trend") {
     name = `${year}_往月数据对比.csv`;
